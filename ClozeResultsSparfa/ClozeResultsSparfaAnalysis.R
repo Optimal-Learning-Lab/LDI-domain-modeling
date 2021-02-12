@@ -217,7 +217,7 @@ set.seed(42)
   modelob2<-LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","KC..Default.","AC","AC"),
                 features=c("intercept","intercept","logsuc$","logfail$","logsuc$","logfail$"),
                 fixedpars=c(.9,.7),interc=TRUE,verbose=FALSE)
-  print("hi")
+  #print("hi")
   cat(paste(posKC,KCthreshm,RSVDcomp,modelob$r2,
             modelob2$r2,mean(modelob$subjectrmse$x),
             mean(modelob2$subjectrmse$x),modelob$r2-modelob2$r2,"\n",sep=","))
