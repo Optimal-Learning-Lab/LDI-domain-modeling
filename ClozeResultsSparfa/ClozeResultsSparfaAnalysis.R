@@ -189,9 +189,14 @@ set.seed(42)
   #View(val)
 
   print("line191")
-  modelob<-LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","AC","AC"),
+
+  modelob<-LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","KC..Default.","AC","AC"),
                features=c("intercept","intercept","logsuc$","logfail$","logsuc$","logfail$"),
-               fixedpars=c(.9,.7),interc=TRUE,verbose=FALSE)
+              fixedpars=c(.9,.7),interc=TRUE,verbose=FALSE)
+
+  #modelob<-LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","AC","AC"),
+  #             features=c("logitdec","logitdec","logafm"),
+  #             fixedpars=c(.9,.7),interc=TRUE,verbose=FALSE)
   print("line195")
   val[,("AC"):=NULL]
 
