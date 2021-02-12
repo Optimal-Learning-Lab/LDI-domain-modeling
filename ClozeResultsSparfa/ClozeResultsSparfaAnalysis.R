@@ -69,7 +69,7 @@ mydata[mydata<(-2)] <- -2
 
 rownames(mydata)<-rownamesmydata
 
-#Do transfioramtion to data frame
+#Do transformation to data frame
 newMydata<-as.data.frame(mydata)
 rownames(newMydata)<-rownamesmydata
 
