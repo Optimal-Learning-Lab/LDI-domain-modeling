@@ -28,6 +28,7 @@ SparfaliteUse=TRUE
 
 source("LKTfunctions.R")
 source("litecvO.R")
+source("bar.R")
 
 #==========================Data Preparation==============================
 
@@ -188,8 +189,6 @@ set.seed(42)
   compKC<-paste(paste("c",1:posKC,sep=""),collapse="__")
   #View(val)
 
-  print("line191")
-
   modelob<-LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","KC..Default.","AC","AC"),
                features=c("intercept","intercept","logsuc$","logfail$","logsuc$","logfail$"),
               fixedpars=c(.9,.7),interc=TRUE,verbose=FALSE)
@@ -197,10 +196,8 @@ set.seed(42)
   #modelob<-LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","AC","AC"),
   #             features=c("logitdec","logitdec","logafm"),
   #             fixedpars=c(.9,.7),interc=TRUE,verbose=FALSE)
-  print("line195")
   val[,("AC"):=NULL]
 
-  print("line198")
   #val[,(paste0("c",1:posKC)):=NULL]
 
   trows<-KCmodel$rows
