@@ -33,17 +33,17 @@ RSVDcomp<-2
 #==========================Data Preparation==============================
 
 
-setwd("C:/Users/ppavl/OneDrive - The University of Memphis/IES Data")
-val<-setDT(read.table("ds1465_tx_All_Data_64_2016_0720_222352.txt",sep="\t", header=TRUE,na.strings="NA",quote="",comment.char = ""))
+setwd("C:\\Users\\ppavl\\Dropbox\\Active Projects\\LDI-domain-modeling\\")
+
+val<-setDT(read.table("ds126_tx_All_Data_297_2015_0802_174904.txt",sep="\t",
+                      header=TRUE,na.strings="NA",quote="",comment.char = ""))
+#val$KC..Default.<-val$KC..Article_Rule.
 
 val$CF..ansbin.<-ifelse(tolower(val$Outcome)=="correct",1,ifelse(tolower(val$Outcome)=="incorrect",0,-1))
 val$CF..ansbin.<-as.numeric(val$CF..ansbin.)
 val<-val[val$CF..ansbin.!=-1,]
-val$KC..Default.<-as.numeric(regmatches(x =val$KC..Default.,regexpr("^[^-]*[^ -]",text = val$KC..Default.)))
-val$KC..Default.<-ifelse(val$KC..Default.>17,val$KC..Default.-18,val$KC..Default.)
-val$KC..Default.<-paste( val$KC..Default.,val$CF..Stimulus.Version.,gsub(" ","",val$CF..Correct.Answer.),sep="-")
-
-
+#val<-val[val$KC..Default.!="done",]
+val<-val[val$KC..Default.!="",]
 
 
 aggdata<- val[,mean(CF..ansbin.),by=list(KC..Default.,Anon.Student.Id)]
@@ -177,9 +177,10 @@ colnames(g)<-rownames(g)
 
 compKC<-paste(paste("c",1:posKC,sep=""),collapse="__")
 
-modelob<-LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","KC..Default.","AC","AC"),
-             features=c("intercept","intercept","logsuc$","logfail$","logsuc$","logfail$"),
-             fixedpars=c(.9,.7),interc=TRUE,verbose=FALSE)
+modelob<-LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","KC..Default.","AC"),
+             features=c("intercept","intercept","linesuc$","linefail$","linecomp$"),
+             #covariates=c(NA,NA,NA,NA,"KC..Default.","KC..Default."),
+             interc=FALSE,verbose=FALSE,cost=1024)
 
 val[,("AC"):=NULL]
 val[,(paste0("c",1:posKC)):=NULL]
@@ -198,9 +199,10 @@ val<-merge(val,KCmodelm,
             by.y = 'rows',by.x='KC..Default.',sort=FALSE)
 val<-val[order(val$Row),]
 #View(val)
-modelob2<-LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","KC..Default.","AC","AC"),
-              features=c("intercept","intercept","logsuc$","logfail$","logsuc$","logfail$"),
-              fixedpars=c(.9,.7),interc=TRUE,verbose=FALSE)
+modelob2<-LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","KC..Default.","AC"),
+              features=c("intercept","intercept","linesuc$","linefail$","linecomp$"),
+              #covariates=c(NA,NA,NA,NA,"KC..Default.","KC..Default."),
+              interc=FALSE,verbose=FALSE,cost=1024)
 
 cat(paste(posKC,KCthreshm,RSVDcomp,modelob$r2,
           modelob2$r2,mean(modelob$subjectrmse$x),
@@ -210,7 +212,7 @@ x<<-rbind(x,c(posKC,RSVDcomp,modelob$r2-modelob2$r2))
 
 x<<-data.frame()
 
-temp<-grid_search(testKCmodel,params=list(KCthreshm=c(.1),RSVDcomp=c(2,3,4,5,6,7,8),posKC=c(2,3,4,5,6,7,8,10,11,12)),val=val)
+temp<-grid_search(testKCmodel,params=list(KCthreshm=c(.1),RSVDcomp=c(2,3,4,5,6,7,8),posKC=c(6,7,8,10,11,12)),val=val)
 names(x)<-c("KCs","Components","R-squared_Gain")
 #heatmap(as.matrix(dcast(x,KCs~Components, value.var="R-squared_Gain")[,2:4]))
 

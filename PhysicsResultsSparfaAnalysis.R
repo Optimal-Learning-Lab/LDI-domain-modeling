@@ -1,5 +1,6 @@
-
 #2 datasets
+
+setwd("C:\\Users\\ppavl\\Dropbox\\Active Projects\\LDI-domain-modeling\\ClozeResultsSparfa")
 
 library(reshape2)
 library(car)
@@ -16,8 +17,6 @@ library(dplyr)
 library(paramtest)
 library(data.table)
 
-source("C://Users//ppavl//Dropbox//Active projects//LKT//R//LKTfunctions.R")
-
 #parameters
 posKC<-3
 usethresh<-FALSE
@@ -25,27 +24,25 @@ KCthresh<-.2
 usethreshm<-TRUE
 KCthreshm<-.2
 RSVDcomp<-2
-#rm(posKC,KCthreshm,RSVDcomp)
+SparfaliteUse=TRUE
 
-
+source("C://Users//ppavl//Dropbox//Active projects//LKT//R//LKTfunctions.R")
+source("litecvO.R")
 
 #==========================Data Preparation==============================
 
-
-val<-setDT(read.table("ds126_tx_All_Data_297_2015_0802_174904.txt",sep="\t",
-                      header=TRUE,na.strings="NA",quote="",comment.char = ""))
-#val$KC..Default.<-val$KC..Article_Rule.
+setwd("C:/Users/ppavl/OneDrive - The University of Memphis/IES Data")
+val<-setDT(read.table("ds1465_tx_All_Data_64_2016_0720_222352.txt",sep="\t", header=TRUE,na.strings="NA",quote="",comment.char = ""))
 
 val$CF..ansbin.<-ifelse(tolower(val$Outcome)=="correct",1,ifelse(tolower(val$Outcome)=="incorrect",0,-1))
 val$CF..ansbin.<-as.numeric(val$CF..ansbin.)
 val<-val[val$CF..ansbin.!=-1,]
-#val<-val[val$KC..Default.!="done",]
-val<-val[val$KC..Default.!="",]
+val$KC..Default.<-as.numeric(regmatches(x =val$KC..Default.,regexpr("^[^-]*[^ -]",text = val$KC..Default.)))
+val$KC..Default.<-ifelse(val$KC..Default.>17,val$KC..Default.-18,val$KC..Default.)
+val$KC..Default.<-paste( val$KC..Default.,val$CF..Stimulus.Version.,gsub(" ","",val$CF..Correct.Answer.),sep="-")
 
-#val$Outcome<-ifelse(val$CF..ansbin.==1,"CORRECT","INCORRECT")
+
 aggdata<- val[,mean(CF..ansbin.),by=list(KC..Default.,Anon.Student.Id)]
-
-
 
 colnames(aggdata)<-c('KC..Default.','Anon.Student.Id','CF..ansbin.')
 
@@ -59,31 +56,45 @@ mydata<-mydata[,-1]
 
 # determine the column names that contain NA values
 nm <- names(mydata)[colSums(is.na(mydata)) != 0]
+
 ## replace with the mean - by 'id'
 mydata[, (nm) := lapply(nm, function(x) {
   x <- get(x)
   x[is.na(x)] <- mean(x, na.rm = TRUE)
   x
 })]
-mydata<-log(mydata/(1-mydata))
-mydata[mydata>2] <- 2
-mydata[mydata<(-2)] <- -2
+#mydata<-log(mydata/(1-mydata))
+#mydata[mydata>2] <- 2
+#mydata[mydata<(-2)] <- -2
+
 rownames(mydata)<-rownamesmydata
 
-#==========================Feature matrix================================
+#Do transformation to data frame
+newMydata<-as.data.frame(mydata)
+rownames(newMydata)<-rownamesmydata
 
-mydata[, names(mydata) :=lapply(.SD, function(x) x - mean(x)), .SDcols = names(mydata)]
-df <- mydata[,as.matrix(.SD) %*% t(as.matrix(.SD)),.SDcols=names(mydata)]
-df<-df/nrow(df)
-rownames(df)<-1:nrow(mydata)
+
+#==========================Feature matrix================================
+#mydata[, names(mydata) :=lapply(.SD, function(x) x - mean(x)), .SDcols = names(mydata)]
+#df <- mydata[,as.matrix(.SD) %*% t(as.matrix(.SD)),.SDcols=names(mydata)]
+#df<-df/nrow(df)
+#rownames(df)<-1:nrow(mydata)
+#colnames(df)<-rownames(mydata)
+
+#df[df>7] <- 0
+
+#==========================Sparfalite Analysis================================
+mydata_matrix<-as.matrix(mydata)
+Z<-cvlite(mydata_matrix)
+df<-t(Z$z)
 colnames(df)<-rownames(mydata)
 
-diag(df)<-0
+#data=rlvl(val)
 
 testKCmodel<-function (iter,posKC,KCthreshm,RSVDcomp,val){
-  set.seed(42)
-  #==========================Reduce matrix================================
+set.seed(42)
 
+  #==========================Reduce matrix================================
   reducedmatrix<-rsvd(df,RSVDcomp)
   rownames(reducedmatrix$v)<-rownames(mydata)
 
@@ -114,9 +125,8 @@ testKCmodel<-function (iter,posKC,KCthreshm,RSVDcomp,val){
       as.data.frame(sapply(apply(cm$membership, 1, function(x)
         which(x == max(x))), paste, collapse = " "))
   }
+  #View(KCmodel)
   colnames(KCmodel)[1] <- "AC"
-
-
   #print(KCmodel)
   KCmodel$rows<-rownames(KCmodel)
   val<-merge(val,
@@ -124,7 +134,7 @@ testKCmodel<-function (iter,posKC,KCthreshm,RSVDcomp,val){
              by.y = 'rows',
              by.x = 'KC..Default.',
              sort = FALSE)
- # View(val$AC)
+
   #
   #
   # if (usethreshm) {
@@ -150,6 +160,7 @@ testKCmodel<-function (iter,posKC,KCthreshm,RSVDcomp,val){
   val<-val[order(val$Anon.Student.Id,val$Time),]
   #View(val)
   #=================Visualize============
+
   # expand.matrix <- function(A){
   #   m <- nrow(A)
   #   n <- ncol(A)
@@ -160,9 +171,12 @@ testKCmodel<-function (iter,posKC,KCthreshm,RSVDcomp,val){
   # KCmodelmat<-KCmodelm
   # KCmodelmat$rows<-NULL
   # g<-expand.matrix(as.matrix(KCmodelmat))
+
+
   #
   # rownames(g)<-gsub( "|",  ".", colnames(g), fixed = TRUE)
   # colnames(g)<-rownames(g)
+
   #am.graph<-new("graphAM", adjMat=g, edgemode="undirected")
   #plot(am.graph, attrs = list(graph = list(overlap="prism"),
   #                            node = list(fillcolor = "lightblue",fontsize=300,height=800),
@@ -171,25 +185,19 @@ testKCmodel<-function (iter,posKC,KCthreshm,RSVDcomp,val){
 
   #=================Test===============================
 
-  #compKC<-paste(paste("c",1:posKC,sep=""),collapse="__")
-  #View(val)
   modelob<-LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","KC..Default.","AC"),
-               features=c("intercept","intercept","linesuc$","linefail$","linecomp$"),
-               #covariates=c(NA,NA,NA,NA,"KC..Default.","KC..Default."),
-               interc=TRUE,verbose=FALSE)
-  #print(modelob$coefs)
-  #(KCmodel)
+                  features=c("intercept","intercept","linesuc$","linefail$","linecomp$"),
+                  #covariates=c(NA,NA,NA,NA,"KC..Default.","KC..Default."),
+                  interc=TRUE,verbose=FALSE)
+
   val[,("AC"):=NULL]
-  #val[,(paste0("c",1:posKC)):=NULL]
 
   trows<-KCmodel$rows
   KCmodel$AC<-sample(KCmodel$AC)
   KCmodel$rows<-trows
   val<-merge(val,KCmodel,
              by.y = 'rows',by.x='KC..Default.',sort=FALSE)
-
-
-  val<-val[order(val$Anon.Student.Id,val$Time),]
+  val<-val[order(val$Row),]
 
   modelob2<-LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","KC..Default.","AC"),
                 features=c("intercept","intercept","linesuc$","linefail$","linecomp$"),
@@ -198,17 +206,16 @@ testKCmodel<-function (iter,posKC,KCthreshm,RSVDcomp,val){
 
   cat(paste(posKC,KCthreshm,RSVDcomp,modelob$r2,
             modelob2$r2,mean(modelob$subjectrmse$x),
-            mean(modelob2$subjectrmse$x),(modelob$r2-modelob2$r2)/((modelob$r2+modelob2$r2)/2),"\n",sep=","))
-  x<<-rbind(x,c(posKC,RSVDcomp,modelob$r2,(modelob$r2-modelob2$r2)/((modelob$r2+modelob2$r2)/2)))
-  y1<<-modelob
-  y2<<-modelob2
-
+            mean(modelob2$subjectrmse$x),modelob$r2-modelob2$r2,"\n",sep=","))
+  x<<-rbind(x,c(posKC,RSVDcomp,modelob$r2-modelob2$r2))
+  y1<<-modelob$coefs
+  y2<<-modelob2$coefs
 }
 
 x<<-data.frame()
 
-temp<-grid_search(testKCmodel,params=list(KCthreshm=c(.1),RSVDcomp=c(5:8),posKC=c(4:15*2)),val=val)
-names(x)<-c("KCs","Components","R-squared","R-squared_Gain")
+temp<-grid_search(testKCmodel,params=list(KCthreshm=c(.1),RSVDcomp=c(5),posKC=c(8)),val=val)
+names(x)<-c("KCs","Components","R-squared_Gain")
 #heatmap(as.matrix(dcast(x,KCs~Components, value.var="R-squared_Gain")[,2:4]))
 
 
@@ -216,15 +223,12 @@ bar(dv = "R-squared_Gain",
     factors = c(Components,KCs),
     dataframe = x,
     errbar = FALSE,
-    ylim=c(0, .02))
+    ylim=c(0, .005))
 
- LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","KC..Default."),
-     features=c("intercept","intercept","logsuc$","logfail$"),
-     fixedpars=c(.9,.7),interc=TRUE,verbose=FALSE)$r2
+LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","KC..Default."),
+    features=c("intercept","intercept","logsuc$","logfail$"),
+    fixedpars=c(.9,.7),interc=TRUE,verbose=FALSE)$r2
 
 
-
- LKT(data=rlvl(val),components=c("KC..Default.","KC..Default."),
-     features=c("linesuc$","linefail$"),
-     fixedpars=c(.9,.7),interc=TRUE,verbose=FALSE)$coefs
+#testKCmodel(KCthreshm=.3,RSVDcomp=2,posKC=4,val=val)
 

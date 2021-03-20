@@ -13,7 +13,7 @@ cvlite <- function(Y){
 	cvfold <- 4
 	cvt <- 1
 	siz <- dim(Y)
-	lamcv <- seq(10,2000,60)
+	lamcv <- seq(200,2000,50)
 	mask_orig <- is.nan(Y)
 	# this code records correct prediction percentage rather than things
 	# like AUC, you can change to/add other metrics

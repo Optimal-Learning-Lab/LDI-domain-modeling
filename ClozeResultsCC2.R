@@ -78,93 +78,48 @@ df<-df/nrow(df)
 rownames(df)<-1:nrow(mydata)
 colnames(df)<-rownames(mydata)
 
-#df[df>7] <- 0
-
-
+diag(df)<-0
 
 
 
 testKCmodel<-function (iter,posKC,KCthreshm,RSVDcomp,val){
-  set.seed(42)
+
 #==========================Reduce matrix================================
 
-reducedmatrix<-rsvd(df,RSVDcomp)
-rownames(reducedmatrix$v)<-rownames(mydata)
-
-#==========================cluster matrix==============================
-
-cm <- (cmeans(reducedmatrix$v,centers=posKC))
-#print(cm)
-#===========================visualizations====================
-
-# library(factoextra)
-# x<-fviz_cluster(list(data = reducedmatrix$v, cluster=cm$cluster),
-#              ellipse.type = "norm",
-#              ellipse.level = .999,
-#              palette = "jco",
-#              repel=TRUE,
-#              ggtheme = theme_minimal(),xlab="",ylab="")
-# plot(x)
+  #==========================Reduce matrix================================
+  #print(df[1:10,])
+  reducedmatrix<-rsvd(df,RSVDcomp)
+  rownames(reducedmatrix$v)<-rownames(mydata)
+  #==========================cluster matrix==============================
+  #View(reducedmatrix$v)
+  cm <- (cmeans(reducedmatrix$v,centers=posKC))
+  #print(cm)
 
 
-#=================extrapolate KC model==============
+  #=================extrapolate KC model==============
 
-if(usethresh) {
-  KCmodel <-
-    as.data.frame(sapply(apply(cm$membership, 1, function(x)
-      which(x > KCthresh)), paste, collapse = " "))
-} else{
-  KCmodel <-
-    as.data.frame(sapply(apply(cm$membership, 1, function(x)
-      which(x == max(x))), paste, collapse = " "))
-}
-#View(KCmodel)
-colnames(KCmodel)[1] <- "AC"
-#print(KCmodel)
-KCmodel$rows<-rownames(KCmodel)
-val<-merge(val,
-           KCmodel,
-           by.y = 'rows',
-           by.x = 'KC..Default.',
-           sort = FALSE)
 
-#
-#
-# if (usethreshm) {
-#   KCmodelm <- as.data.frame(ifelse(cm$membership > KCthreshm, 1, 0))
-# } else {
-#   KCmodelm <- as.data.frame(cm$membership)
-# }
-# #View(KCmodelm)
-# colnames(KCmodelm)<-paste0("c", colnames(KCmodelm), sep = "")
-#
-# KCmodelm$rows<- rownames(KCmodelm)
-#
-# val<-merge(val,
-#            KCmodelm,
-#            by.y = 'rows',
-#            by.x = 'KC..Default.',
-#            sort = FALSE
-# )
-
-#print(KCmodelm)
+  if(usethresh) {
+    KCmodel <-
+      as.data.frame(sapply(apply(cm$membership, 1, function(x)
+        which(x > KCthresh)), paste, collapse = " "))
+  } else{
+    KCmodel <-
+      as.data.frame(sapply(apply(cm$membership, 1, function(x)
+        which(x == max(x))), paste, collapse = " "))
+  }
+  #View(KCmodel)
+  colnames(KCmodel)[1] <- "AC"
+  #print(KCmodel)
+  KCmodel$rows<-rownames(KCmodel)
+  val<-merge(val,
+             KCmodel,
+             by.y = 'rows',
+             by.x = 'KC..Default.',
+             sort = FALSE)
 
 
 val<-val[order(val$Anon.Student.Id,val$Time),]
-#View(val)
-#=================Visualize============
-
-# expand.matrix <- function(A){
-#   m <- nrow(A)
-#   n <- ncol(A)
-#   B <- matrix(0,nrow = m, ncol = m)
-#   C <- matrix(0,nrow = n, ncol = n)
-#   cbind(rbind(B,t(A)),rbind(A,C))
-# }
-# KCmodelmat<-KCmodelm
-# KCmodelmat$rows<-NULL
-# g<-expand.matrix(as.matrix(KCmodelmat))
-
 
 #=================Test===============================
 
@@ -176,6 +131,7 @@ modelob<-LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..D
 val[,("AC"):=NULL]
 
 trows<-KCmodel$rows
+
 KCmodel$AC<-sample(KCmodel$AC)
 KCmodel$rows<-trows
 val<-merge(val,KCmodel,
@@ -189,36 +145,33 @@ modelob2<-LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..
 
 cat(paste(posKC,KCthreshm,RSVDcomp,modelob$r2,
           modelob2$r2,mean(modelob$subjectrmse$x),
-          mean(modelob2$subjectrmse$x),modelob$r2-modelob2$r2,"\n",sep=","))
-x<<-rbind(x,c(posKC,RSVDcomp,modelob$r2-modelob2$r2))
+          mean(modelob2$subjectrmse$x),(modelob$r2-modelob2$r2)/(modelob2$r2),"\n",sep=","))
+x<<-rbind(x,c(posKC,RSVDcomp,modelob$r2,(modelob$r2-modelob2$r2)/(modelob2$r2)))
+
 y1<<-modelob$coefs
 y2<<-modelob2$coefs
+mod<<-KCmodel
 }
 
 x<<-data.frame()
 
-temp<-grid_search(testKCmodel,params=list(KCthreshm=c(.1),RSVDcomp=c(2),posKC=c(4)),val=val)
-names(x)<-c("KCs","Components","R-squared_Gain")
+temp<-grid_search(testKCmodel,params=list(KCthreshm=c(.1),RSVDcomp=c(2:9),posKC=c(2:9                                                                                  )),val=val)
+names(x)<-c("KCs","Components","R-squared","R-squared_Gain")
 #heatmap(as.matrix(dcast(x,KCs~Components, value.var="R-squared_Gain")[,2:4]))
-
+y1[grepl("linecomp",rownames(y1)),]
+y2[grepl("linecomp",rownames(y2)),]
+mean(y1[grepl("linecomp",rownames(y1)),])
+mean(y2[grepl("linecomp",rownames(y2)),])
+range(y1[grepl("linecomp",rownames(y1)),])
+sd(y2[grepl("linecomp",rownames(y2)),])
+View(mod[order(mod$AC),])
 
 bar(dv = "R-squared_Gain",
     factors = c(Components,KCs),
     dataframe = x,
     errbar = FALSE,
-    ylim=c(0, .005))
-
-
-# LKT(data=rlvl(val),components=c("Anon.Student.Id","KC..Default.","KC..Default.","KC..Default."),
-#     features=c("intercept","intercept","logsuc$","logfail$"),
-#     fixedpars=c(.9,.7),interc=TRUE,verbose=FALSE)$r2
-
-
-#testKCmodel(KCthreshm=.3,RSVDcomp=2,posKC=4,val=val)
-
-
-
-
+    ylim=c(0,.01
+           ))
 
 
 
