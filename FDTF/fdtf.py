@@ -78,6 +78,10 @@ class FDTF(object):
         :param question: question index
         :return: predicted value of tensor Y[attempt, student, question]
         """
+
+        print((self.T[student, attempt, :]))
+        print((self.Q[:, question]))
+
         pred = np.dot(self.T[student, attempt, :], self.Q[:, question])
         if self.use_bias_t:
             if self.use_global_bias:

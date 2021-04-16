@@ -8,6 +8,7 @@ import pickle
 from multiprocessing import Lock
 import timeit
 
+
 output_lock = Lock()
 
 
@@ -182,7 +183,6 @@ def run_mastery_grids():
 
             run_fdtf_exp(*para)
 
-
 def run_morf():
     data_str = "morf"
     course_str = 'Quiz'
@@ -200,7 +200,7 @@ def run_morf():
         validation = False   #add to configfile
         metrics = ["rmse", "mae"]
 
-        num_folds = 5
+        num_folds = 1
         for fold in range(1, num_folds + 1):
             print(fold)
             log_path = "logs/{}/{}/{}/test_fold_{}/".format(data_str, course_str, model_str, fold)

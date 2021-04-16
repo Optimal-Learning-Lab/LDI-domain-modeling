@@ -6,6 +6,8 @@ import csv
 import base64
 import pandas as pd
 import xlsxwriter
+import openpyxl
+import warnings
 
 def fdtf_config(data_str, course_str, views, concept_dim, fold, lambda_t, lambda_q, lambda_bias, slr, lr, max_iter,
                 metrics, log_file, validation, validation_limit=30):
@@ -17,11 +19,11 @@ def fdtf_config(data_str, course_str, views, concept_dim, fold, lambda_t, lambda
     """
 
     with open('data/{}/{}/{}_train_val_test.pkl'.format(data_str, course_str, fold), 'rb') as f:
-        data = pickle.load(f)
-        print(data)
+        data1 = pickle.load(f)
+        #print(data1)
         # convert your original dataset into .csv, add by Liang
         path_train_csv = 'data/{}/{}/{}_train.xlsx'.format(data_str, course_str, fold)
-        train_data=data['train']
+        train_data=data1['test']
         header_data=['Student','Attempt','Question','Score','Resource']
         df = pd.DataFrame(train_data)
         writer = pd.ExcelWriter(path_train_csv, engine='xlsxwriter')
@@ -38,7 +40,7 @@ def fdtf_config(data_str, course_str, views, concept_dim, fold, lambda_t, lambda
         writer.save()
 
         path_test_csv = 'data/{}/{}/{}_test.xlsx'.format(data_str, course_str, fold)
-        test_data=data['test']
+        test_data=data1['test']
         header_data1 = ['Student', 'Attempt', 'Question', 'Score', 'Resource']
         df1 = pd.DataFrame(test_data)
         writer1 = pd.ExcelWriter(path_test_csv, engine='xlsxwriter')
@@ -53,7 +55,7 @@ def fdtf_config(data_str, course_str, views, concept_dim, fold, lambda_t, lambda
         writer1.save()
 
         path_test_csv = 'data/{}/{}/{}_val.xlsx'.format(data_str, course_str, fold)
-        val_data=data['val']
+        val_data=data1['val']
         header_data2 = ['Student', 'Attempt', 'Question', 'Score', 'Resource']
         df2 = pd.DataFrame(val_data)
         writer2 = pd.ExcelWriter(path_test_csv, engine='xlsxwriter')
@@ -66,6 +68,27 @@ def fdtf_config(data_str, course_str, views, concept_dim, fold, lambda_t, lambda
         for col_num, value in enumerate(header_data2):
             worksheet2.write(0, col_num, value,header_format2)
         writer2.save()
+
+    warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
+    print("line21212222222222222222222222222")
+    testFile = pd.read_excel('data/{}/{}/{}_tfData_test.xlsx'.format(data_str, course_str, fold), engine="openpyxl")
+    trainFile= pd.read_excel('data/{}/{}/{}_tfData_training.xlsx'.format(data_str, course_str, fold), engine="openpyxl")
+    validFile = pd.read_excel('data/{}/{}/{}_tfData_validation.xlsx'.format(data_str, course_str, fold), engine="openpyxl")
+
+    testData=testFile.values.tolist()
+    trainData=trainFile.values.tolist()
+    validData=validFile.values.tolist()
+
+    #print(testData)
+    #print(trainData)
+    #print(validData)
+
+    numStudent=17
+    numStudentAttempt=11
+    numQuestion=72
+
+    data={'num_users':17,'num_quizzes':72,'num_lectures':0,'num_discussions':0,'num_attempts': 11,'train':trainData,'test':testData,'val':validData}
+    print(data)
 
     config = {
         'views': views,
