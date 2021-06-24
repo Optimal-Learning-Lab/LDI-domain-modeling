@@ -4,6 +4,8 @@ from numpy import linalg as LA
 import time
 from sklearn.metrics import mean_squared_error, mean_absolute_error, roc_auc_score
 import warnings
+import sys
+import pandas as pd
 
 warnings.filterwarnings("error")
 
@@ -22,9 +24,6 @@ class FDTF(object):
         #    self.logger = create_logger(self.log_file)
         #for key in config():
         #    print(key)
-
-        #print(print(key, ' : ', value)
-        print("config")
         
         self.views = config['views']
         
@@ -58,22 +57,12 @@ class FDTF(object):
                                           self.num_concepts))
 
         self.Q = np.random.random_sample((self.num_concepts, self.num_questions))
-        # print("The matrices Q start ")
-        # print(self.Q)
-        # print("The matrices Q end ")
         self.bias_s = np.zeros(self.num_users)
         self.bias_t = np.zeros(self.num_attempts)
         self.bias_q = np.zeros(self.num_questions)
-        print("line 67")
-        print(type(self.train_data))
-        print((self.train_data).ndim)
-        print((self.train_data).shape)
-        print(self.train_data)
-        print("line 69")
         
         
         self.global_bias = np.mean(self.train_data, axis=0)[3]
-
     def __getstate__(self):
         """
         since the logger cannot be pickled, to avoid the pickle error, we should add this
@@ -95,16 +84,7 @@ class FDTF(object):
         :param question: question index
         :return: predicted value of tensor Y[attempt, student, question]
         """
-        #print("_get_question_prediction")
         pred = np.dot(self.T[student, attempt, :], self.Q[:, question])
-
-        # print(pred)
-        # print("The tensor T start ")
-        # print(self.T[student, attempt, :])
-        # print("The tensor T end ")
-        # print("The matrices Q start ")
-        # print(self.Q[:, question])
-        # print("The matrices Q end ")
 
         if self.use_bias_t:
             if self.use_global_bias:
@@ -130,13 +110,16 @@ class FDTF(object):
         compute the loss, which is RMSE of observed records
         :return: loss
         """
-        #print("_get_loss")
         loss, square_loss, reg_bias = 0., 0., 0.
         square_loss_q = 0.
         q_count = 0.
+        
+        train_data_new=[]
+        train_data_new=self.train_data.tolist()
+        
+        for (student, attempt, question, obs, resource) in train_data_new:
 
-        for (student, attempt, question, obs, resource) in self.train_data:
-            pred = self._get_question_prediction(student, attempt, question)
+            pred = self._get_question_prediction(int(student), int(attempt), int(question))
             square_loss_q += (obs - pred) ** 2
             q_count += 1
 
@@ -144,11 +127,6 @@ class FDTF(object):
 
         reg_T = LA.norm(self.T) ** 2  # regularization on tensor T
         reg_Q = LA.norm(self.Q) ** 2  # regularization on matrix Q
-
-        print("The matrices Q start ")
-        #print(self.T)
-        print(self.Q)
-        print("The matrices Q end ")
 
         reg_features = self.lambda_q * reg_Q + self.lambda_t * reg_T
 
@@ -202,7 +180,6 @@ class FDTF(object):
         :param obs: the value at Y[attempt, student, question]
         :return:
         """
-        #print("_grad_Q_k")
 
         grad = np.zeros_like(self.Q[:, question])
         if obs is not None:
@@ -225,7 +202,6 @@ class FDTF(object):
         :param obs:
         :return:
         """
-        #print("_grad_bias_s")
         grad = 0.
         if obs is not None:
             pred = self._get_question_prediction(student, attempt, material)
@@ -340,18 +316,18 @@ class FDTF(object):
         with stochastic gradient descent
         :return:
         """
-        self.logger.info(strBlue("*"*100))
-        self.logger.info(strBlue('test attempt: {}, train size: {}'.format(
-            self.current_test_attempt, len(self.train_data)))
-        )
+        #self.logger.info(strBlue("*"*100))
+        #self.logger.info(strBlue('test attempt: {}, train size: {}'.format(
+        #    self.current_test_attempt, len(self.train_data)))
+        #)
 
         loss, q_count, q_rmse, reg_features, reg_bias = self._get_loss()
-        self.logger.info(strBlue("initial: lr: {:.4f}, loss: {:.2f}, q_count: {}, q_rmse: {:.5f}, "
-                                 "reg_features: {:.2f}, reg_bias: {:.3f}".format(
-            self.lr, loss, q_count, q_rmse, reg_features, reg_bias))
-        )
+        #self.logger.info(strBlue("initial: lr: {:.4f}, loss: {:.2f}, q_count: {}, q_rmse: {:.5f}, "
+        #                         "reg_features: {:.2f}, reg_bias: {:.3f}".format(
+        #    self.lr, loss, q_count, q_rmse, reg_features, reg_bias))
+        #)
         loss_list = [loss]
-        self.logger.info(strBlue("*" * 40 + "[ Training Results ]" + "*" * 40))
+        #self.logger.info(strBlue("*" * 40 + "[ Training Results ]" + "*" * 40))
 
         train_perf = []
         start_time = time.time()
@@ -361,8 +337,8 @@ class FDTF(object):
         best_T, best_Q = [0] * 2
         best_bias_s, best_bias_t, best_bias_q, best_global_bias = [0] * 4
 
-
         while not converge:
+            self.train_data=self.train_data.copy()
             np.random.shuffle(self.train_data)
             best_T = np.copy(self.T)
             best_Q = np.copy(self.Q)
@@ -371,10 +347,14 @@ class FDTF(object):
             best_bias_q = np.copy(self.bias_q)
 
             for (student, attempt, index, obs, resource) in self.train_data:
-                self._optimize_sgd(student, attempt, index, obs, resource=resource)
-
+                self._optimize_sgd(int(student), int(attempt), int(index), int(obs), resource=resource)
+            
             sorted_train_data = sorted(self.train_data, key = lambda x:[x[0], x[1]])
             for (student, attempt, index, obs, resource) in sorted_train_data:
+                student=int(student)
+                attempt=int(attempt)
+                index=int(index)
+                obs=int(obs)
                 if attempt < self.num_attempts - 1:
                    self.T[student, attempt + 1, :] = 2 * self.T[student, attempt, :] +\
                        np.true_divide(2 * (1 - self.T[student, attempt, :]), 1 + np.exp(- self.slr * self.Q[:, index])) - 1
@@ -383,27 +363,29 @@ class FDTF(object):
             train_perf.append([q_count, q_rmse])
 
             run_time = time.time() - start_time
-            self.logger.debug("iter: {}, lr: {:.4f}, total loss: {:.2f}, q_count: {}, "
-                              "q_rmse: {:.5f}".format(iter_num, self.lr, loss, q_count, q_rmse))
-            self.logger.debug("reg_features: {:.2f}, reg_bias: {:.3f}, "
-                              "run time so far: {:.2f}".format(reg_features, reg_bias, run_time))
+            #self.logger.debug("iter: {}, lr: {:.4f}, total loss: {:.2f}, q_count: {}, "
+            #                  "q_rmse: {:.5f}".format(iter_num, self.lr, loss, q_count, q_rmse))
+            #self.logger.debug("reg_features: {:.2f}, reg_bias: {:.3f}, "
+            #                  "run time so far: {:.2f}".format(reg_features, reg_bias, run_time))
 
             if iter_num == self.max_iter:
-                self.logger.info("=" * 50)
-                self.logger.info("** converged **, condition: 0, iter: {}".format(iter_num))
+                #self.logger.info("=" * 50)
+                #self.logger.info("** converged **, condition: 0, iter: {}".format(iter_num))
                 loss_list.append(loss)
                 converge = True
-                self.logger.info("training loss: {:.5f}".format(loss))
-                self.logger.info("q_rmse: {:.5f}".format(q_rmse))
-                self.logger.info("regularization on parameters: {:.5f}".format(reg_features))
+                #self.logger.info("training loss: {:.5f}".format(loss))
+                #print("training loss"+loss)
+                #sys.stdout.flush()
+                #self.logger.info("q_rmse: {:.5f}".format(q_rmse))
+                #self.logger.info("regularization on parameters: {:.5f}".format(reg_features))
 
             elif iter_num >= min_iter and loss >= np.mean(loss_list[-5:]):
-                self.logger.info("=" * 40)
-                self.logger.info("** converged **, condition: 1, iter: {}".format(iter_num))
+                #self.logger.info("=" * 40)
+                #self.logger.info("** converged **, condition: 1, iter: {}".format(iter_num))
                 converge = True
-                self.logger.info("training loss: {:.5f}".format(loss))
-                self.logger.info("q_rmse: {:.5f}".format(q_rmse))
-                self.logger.info("regularization on parameters: {:.5f}".format(reg_features))
+                #self.logger.info("training loss: {:.5f}".format(loss))
+                #self.logger.info("q_rmse: {:.5f}".format(q_rmse))
+                #self.logger.info("regularization on parameters: {:.5f}".format(reg_features))
             elif loss == np.nan:
                 self.lr *= 0.1
 
@@ -419,38 +401,41 @@ class FDTF(object):
         # reset to previous T, Q
         self.T = best_T
         self.Q = best_Q
+        print("The matrices Q start ")
+        print(self.Q)
+        print("The matrices Q end ")
+        sys.stdout.flush()
         self.bias_s = best_bias_s
         self.bias_t = best_bias_t
         self.bias_q = best_bias_q
 
         return train_perf[-1]
 
-
-
     def testing(self, test_data, validation=False):
         """
         :return: performance metrics mean squared error, RMSE, and mean absolute error
         """
-        if not validation:
-            self.logger.info(strGreen("*" * 40 + "[ Testing Results ]" + "*" * 40))
-            self.logger.info(strGreen("Current testing attempt: {}, Test size: {}".format(
-                self.current_test_attempt, len(test_data))))
+        #if not validation:
+        #    self.logger.info(strGreen("*" * 40 + "[ Testing Results ]" + "*" * 40))
+        #    self.logger.info(strGreen("Current testing attempt: {}, Test size: {}".format(
+        #        self.current_test_attempt, len(test_data))))
 
         curr_pred_list = []
         curr_obs_list = []
-
-        for (student, attempt, question, obs, resource) in test_data:
+        test_data_new=[]
+        test_data_new=test_data.values.tolist()
+        #sys.stdout.flush()
+        for (student, attempt, question, obs, resource) in test_data_new:
             if resource == 0:
                 curr_obs_list.append(obs)
-                pred = self._get_question_prediction(student, attempt, question)
+                #sys.stdout.flush()
+                pred = self._get_question_prediction(int(student), int(attempt), int(question))
                 curr_pred_list.append(pred)
                 self.test_obs_list.append(obs)
                 self.test_pred_list.append(pred)
-                self.logger.debug(strCyan("true: {:.5f}, pred: {:.5f}\n".format(obs, pred)))
+                #self.logger.debug(strCyan("true: {:.5f}, pred: {:.5f}\n".format(obs, pred)))
 
         return self.eval(curr_obs_list, curr_pred_list)
-
-
 
     def eval(self, obs_list, pred_list):
         """
@@ -473,18 +458,18 @@ class FDTF(object):
             if metric == "rmse":
                 rmse = mean_squared_error(obs_list, pred_list, squared=False)
                 perf_dict[metric] = rmse
-                self.logger.info(strGreen("RMSE: {:.5f}".format(rmse)))
+                #self.logger.info(strGreen("RMSE: {:.5f}".format(rmse)))
             elif metric == 'mae':
                 mae = mean_absolute_error(obs_list, pred_list)
                 perf_dict[metric] = mae
-                self.logger.info(strGreen("MAE: {:.5f}".format(mae)))
+                #self.logger.info(strGreen("MAE: {:.5f}".format(mae)))
             elif metric == "auc":
                 if np.sum(obs_list) == count:
-                    self.logger.info(strGreen("AUC: None (all ones in true y)"))
+                    #self.logger.info(strGreen("AUC: None (all ones in true y)"))
                     perf_dict[metric] = None
                 else:
                     auc = roc_auc_score(obs_list, pred_list)
                     perf_dict[metric] = auc
-                    self.logger.info(strGreen("AUC: {:.5f}".format(auc)))
-        self.logger.info("\n")
+                    #self.logger.info(strGreen("AUC: {:.5f}".format(auc)))
+        #self.logger.info("\n")
         return perf_dict

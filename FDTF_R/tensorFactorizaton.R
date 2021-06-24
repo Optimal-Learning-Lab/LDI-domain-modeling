@@ -47,9 +47,9 @@ numStudentMax<-max(unique(tfData$Student))
 numAttemptMax<-max(unique(tfData$Attempt))
 numQuestionMax<-max(unique(tfData$Question))
 
-print(paste("numStudent: ",numStudentMax,sep=""))
-print(paste("numStudentAttempt: ",numAttemptMax,sep=""))
-print(paste("numQuestion: ",numQuestionMax,sep=""))
+#print(paste("numStudent: ",numStudentMax,sep=""))
+#print(paste("numStudentAttempt: ",numAttemptMax,sep=""))
+#print(paste("numQuestion: ",numQuestionMax,sep=""))
 
 library(caret)
 #Train/Validation Split
@@ -61,11 +61,10 @@ idx.validation <- createDataPartition(y = train$Student, p = 0.25, list = FALSE)
 tfData_validation <- train[idx.validation, ] #validation set with p = 0.8*0.25 = 0.2
 tfData_training <- train[-idx.validation, ] #final train set with p= 0.8*0.75 = 0.6
 
-library(writexl)
-write_xlsx(tfData_test,"C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization\\data\\morf\\Quiz\\1_tfData_test.xlsx")
-write_xlsx(tfData_training,"C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization\\data\\morf\\Quiz\\1_tfData_training.xlsx")
-write_xlsx(tfData_validation,"C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization\\data\\morf\\Quiz\\1_tfData_validation.xlsx")
-
+#library(writexl)
+#write_xlsx(tfData_test,"C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization\\data\\morf\\Quiz\\1_tfData_test.xlsx")
+#write_xlsx(tfData_training,"C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization\\data\\morf\\Quiz\\1_tfData_training.xlsx")
+#write_xlsx(tfData_validation,"C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization\\data\\morf\\Quiz\\1_tfData_validation.xlsx")
 
 ###Dimensions for tensor
 
@@ -84,24 +83,16 @@ data_str = "morf"
 course_str = 'Quiz'
 model_str = 'fdtf'
 
-print(course_str=="Quiz")
+#print(course_str=="Quiz")
 
-tfData_training<-as.matrix(sapply(tfData_training, as.numeric))
-tfData_validation<-as.matrix(sapply(tfData_validation, as.numeric))
+#tfData_training<-as.matrix(sapply(tfData_training, as.numeric))
+#tfData_validation<-as.matrix(sapply(tfData_validation, as.numeric))
 
 #Store Each Row of a Data Frame in a List
-colnames(tfData_training)<-NULL
-colnames(tfData_validation)<-NULL
-rownames(tfData_training)<-NULL
-rownames(tfData_validation)<-NULL
-
-tfData_training_list<-tfData_training[1:nrow(tfData_training),]
-#tfData_validation_list<-split(tfData_validation, seq(nrow(tfData_validation)))
-tfData_validation_list<-tfData_validation[1:nrow(tfData_validation),]
-
-np <- import("numpy", convert=FALSE)
-tfData_training_Tuple <- np$array(tfData_training_list)
-tfData_validation_Tuple<-np$array(tfData_validation_list)
+#colnames(tfData_training)<-NULL
+#colnames(tfData_validation)<-NULL
+#rownames(tfData_training)<-NULL
+#rownames(tfData_validation)<-NULL
 
 #tfData_training_array<-np_array(array(tfData_training),dtype = NULL, order = "C")
 
@@ -142,14 +133,47 @@ if (course_str=="Quiz"){
       print("IOError")
     }
 
-    #Import the data set
+    data=list("num_users"=numStudent,'num_quizzes'=numQuestion,'num_lectures'=0,'num_discussions'=0,'num_attempts'=numAttempt,"train"=tfData_training,'test'=tfData_test,'val'=tfData_validation)
 
-    data=list("num_users"=numStudent,'num_quizzes'=numQuestion,'num_lectures'=0,'num_discussions'=0,'num_attempts'=numAttempt,"train"=tfData_test,'test'=tfData_training,'val'=tfData_validation)
-    #data=dict('views'=views, convert = TRUE)
+    #generate train_set, test_set for general train and test
+    # if it is for validation, we only use the first 30 attempts for cross validation to
+    # do the hyperparameter tuning
+    validation_limit=30
 
-    #print(data)
+    library(tidyverse)
+    train_data<-data.frame()
+    if(validation){
+      train_data<-data$train %>% filter(Attempt<validation_limit)
+    }else{
+      train_data<-data$train
+    }
 
-    #add array of train to dict
+    val_data<-data.frame()
+    if(validation){
+      val_data<-data$val %>% filter(Attempt<validation_limit)
+    }else{
+      val_data<-data$val
+    }
+
+    test_set<-data.frame()
+    if(validation){
+      test_set<-data$test %>% filter(Attempt<validation_limit)
+    }else{
+      test_set<-data$test
+    }
+
+    if(validation){
+      num_attempts<-validation_limit
+    }
+
+    train_data_list<-train_data[1:nrow(train_data),]
+    val_data_list<-val_data[1:nrow(val_data),]
+    test_set_list<-test_set[1:nrow(test_set),]
+
+    np <- import("numpy", convert=FALSE)
+    train_data_Tuple <- np$array(train_data_list)
+    val_data_Tuple<-np$array(val_data_list)
+    test_set_Tuple<-np$array(test_set_list)
 
     config = dict(
       views= views,
@@ -166,80 +190,72 @@ if (course_str=="Quiz"){
       slr= slr,
       metrics= metrics,
       validation=TRUE,
-      train=tfData_training_Tuple,
-      val=tfData_validation_Tuple,
+      train=train_data_Tuple,
+      val=val_data_Tuple,
+      test=test_set_Tuple,
       convert = TRUE
     )
 
-    #py_dict(keys, values, convert = FALSE)
-    #py_dict('views',views)
-
-    #fdtf_config<<-config
-    #print(config)
-
-    #s <- import("os")
-
-    source_python("data_helper.py")
-
-    #model_config = fdtf_config(
-    #  data_str, course_str, views, concept_dim, fold, lambda_t, lambda_q,
-    #  lambda_bias, slr, lr, max_iter, metrics, validation)
-
     if (model_str=="fdtf"){
       source_python("fdtf.py")
+      print("create model")
       model<-FDTF(config)
-      #model
+      print("done creation of model")
+      }
 
+    if(validation){
+      test_data<-config$val
+    }else{
+      test_data<-rbind(config$test,config$val)
+      model$train_data<-rbind(model$train_data,config$val)
     }
+
+    test_start_attempt<-NULL
+    # since the test start attempt for different students are different,
+    # we need to find the first testing attempt, and add all lectures and discussion before
+    # test_start_attempt into train_data
+    # test_start_attempt
+    test_data<-test_data[order(test_data[,2],decreasing=FALSE),]
+
+    #if(test_data[,5]==0){
+      test_data2<-test_data[test_data[,5]==0,]
+      test_start_attempt<-test_data2[,2][1]
+    #}
+
+    #print(test_start_attempt)
+
+    source_python("RestartTraining.py")
+
+    for (test_attempt in test_start_attempt:model$num_attempts){
+      model$current_test_attempt<-test_attempt
+      model$lr<-lr
+      restart_training(model)
+      print("Start Training")
+      train_perf = model$training()
+
+      test_set<-data.frame();
+      test_set<-test_data[test_data[,2]==test_start_attempt,]
+      model$train_data<-rbind(model$train_data,test_set)
+    }
+    
+    #Output the best Q matrix
+    print(model$Q)
+
+    test_set <- data.frame(apply(test_set, 2, function(x) as.numeric(as.character(x))))
+
+    test_perf <-model$testing(test_set)
+
+    perf_dict<-dict()
+
+    overall_perf<-model$eval(model$test_obs_list,model$test_pred_list)
+    if(validation){
+      perf_dict$val<-overall_perf
+    }else{
+      perf_dict$test<-overall_perf
+    }
+
+    print(perf_dict)
 
   }
 
 }
-
-
-
-
-
-#reticulate::py_config()
-#devtools::session_info()
-
-#Option one
-#devtools::install_github("rstudio/reticulate")
-
-#source_python()
-
-#use_virtualenv("myenv")
-
-#main FDTF code
-
-
-
-#repl_python()
-
-
-
-#library(hash)
-
-
-
-#reticulate::py_config()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
