@@ -61,6 +61,9 @@ idx.validation <- createDataPartition(y = train$Student, p = 0.25, list = FALSE)
 tfData_validation <- train[idx.validation, ] #validation set with p = 0.8*0.25 = 0.2
 tfData_training <- train[-idx.validation, ] #final train set with p= 0.8*0.75 = 0.6
 
+#All data for training
+
+
 #library(writexl)
 #write_xlsx(tfData_test,"C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization\\data\\morf\\Quiz\\1_tfData_test.xlsx")
 #write_xlsx(tfData_training,"C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization\\data\\morf\\Quiz\\1_tfData_training.xlsx")
@@ -189,7 +192,7 @@ if (course_str=="Quiz"){
       tol= 1e-3,
       slr= slr,
       metrics= metrics,
-      validation=TRUE,
+      validation=FALSE,
       train=train_data_Tuple,
       val=val_data_Tuple,
       test=test_set_Tuple,
@@ -203,6 +206,8 @@ if (course_str=="Quiz"){
       print("done creation of model")
       }
 
+    print(validation)
+    
     if(validation){
       test_data<-config$val
     }else{
