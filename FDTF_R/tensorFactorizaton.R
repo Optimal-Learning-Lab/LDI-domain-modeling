@@ -1,5 +1,6 @@
 
-setwd("C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization")
+#setwd("C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization")
+setwd("C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\LDI-domain-modeling\\FDTF_R")
 val<-read.table("ds1465_tx_All_Data_64_2016_0720_222352short.txt",sep="\t", header=TRUE,na.strings="NA",quote="\"",comment.char = "")
 
 #datafile<-"C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization\\ds1465_tx_All_Data_64_2016_0720_222352short.txt"
