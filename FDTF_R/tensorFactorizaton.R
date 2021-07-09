@@ -78,7 +78,8 @@ numQuestion=numQuestionMax+1
 
 #################################################################################################################
 library(reticulate)
-use_python("C:/Users/Liang Zhang/AppData/Local/Programs/Python/Python38")
+#use_python("C:/Users/Liang Zhang/AppData/Local/Programs/Python/Python38")
+use_python("C:/Pyhon39")
 #repl_python()
 
 #use the def run_morf()
@@ -212,7 +213,7 @@ if (course_str=="Quiz"){
       test_data<-config$val
     }else{
       test_data<-rbind(config$test,config$val)
-      model$train_data<-rbind(model$train_data,config$val)
+      model$train_data<-rbind(model$train_data,config$val,config$test)
     }
 
     test_start_attempt<-NULL
@@ -264,3 +265,4 @@ if (course_str=="Quiz"){
   }
 
 }
+
