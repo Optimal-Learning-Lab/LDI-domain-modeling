@@ -1,6 +1,5 @@
 
-#setwd("C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization")
-setwd("C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\LDI-domain-modeling\\FDTF_R")
+setwd("C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization")
 val<-read.table("ds1465_tx_All_Data_64_2016_0720_222352short.txt",sep="\t", header=TRUE,na.strings="NA",quote="\"",comment.char = "")
 
 #datafile<-"C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization\\ds1465_tx_All_Data_64_2016_0720_222352short.txt"
@@ -35,7 +34,9 @@ myData$QuestionLevels<-factor(
   myData$KC..Default, levels=QuestionLevs, labels=seq_along(QuestionLevs)
 )
 
-tfData<-data.frame(as.numeric(myData$StudentLevels),as.numeric(myData$Attempts),as.numeric(myData$QuestionLevels),as.numeric(myData$CF..ansbin.))
+
+
+tfData<-data.frame(as.numeric(myData$StudentLevels)-1,as.numeric(myData$Attempts)-1,as.numeric(myData$QuestionLevels)-1,as.numeric(myData$CF..ansbin.))
 header1<-"Student"
 header2<-"Attempt"
 header3<-"Question"
@@ -44,9 +45,10 @@ header5<-"Resource"
 names(tfData)<-c(header1,header2,header3,header4)
 tfData$Resource<-0
 
-numStudentMax<-max(unique(tfData$Student))
-numAttemptMax<-max(unique(tfData$Attempt))
-numQuestionMax<-max(unique(tfData$Question))
+#dimensions for tensor
+numStudent<-length(unique(tfData$Student))
+numAttempt<-length(unique(tfData$Attempt))
+numQuestion<-length(unique(tfData$Question))
 
 #print(paste("numStudent: ",numStudentMax,sep=""))
 #print(paste("numStudentAttempt: ",numAttemptMax,sep=""))
@@ -69,13 +71,6 @@ tfData_training <- train[-idx.validation, ] #final train set with p= 0.8*0.75 = 
 #write_xlsx(tfData_test,"C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization\\data\\morf\\Quiz\\1_tfData_test.xlsx")
 #write_xlsx(tfData_training,"C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization\\data\\morf\\Quiz\\1_tfData_training.xlsx")
 #write_xlsx(tfData_validation,"C:\\Users\\Liang Zhang\\Desktop\\2020_Spring\\TensorFactorization\\data\\morf\\Quiz\\1_tfData_validation.xlsx")
-
-###Dimensions for tensor
-
-#dimensions for tensor
-numStudent=numStudentMax+1
-numAttempt=numAttemptMax+1
-numQuestion=numQuestionMax+1
 
 #################################################################################################################
 library(reticulate)
