@@ -15,10 +15,7 @@ def preprocessing(dataset_path, columns_list):
 
     print ("Data is loaded from:", dataset_path)
     data = pd.read_csv(dataset_path, sep='\t')
-    data['correct']=np.where(data['Outcome'].str.lower()=="correct",1,(np.where(data['Outcome'].str.lower()=="incorrect",0,-1)))
 
-    #columns_list[columns_list.index('Outcome')]='CF (Ansbin)'
-    print(columns_list)
     ## any preprocessing can de done here
 
     data = data[columns_list]
@@ -100,7 +97,7 @@ def f(args, make_unit_users="No"):
 
     columns_dict = {args.user_id[0]: 'user_id', args.problem_id[0]: 'problem_id', \
                     args.skill_name[0]: 'skill_name', args.correctness[0]: 'correct', \
-                    args.unit[1]: 'Unit', args.section[1]: 'section'}
+                    args.unit[1]: 'unit', args.section[1]: 'section'}
     del columns_dict[None]
     data = preprocessing(args.dataset_path[0], list(columns_dict.keys()))
     data.rename(columns=columns_dict, inplace=True)

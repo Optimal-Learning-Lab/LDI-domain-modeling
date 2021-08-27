@@ -50,14 +50,15 @@ class KCModel:
         parser = argparse.ArgumentParser(description='Process inputs.')
 
         parser.add_argument('--dataset', nargs=1, type=str, default=["Research_test"])
-        parser.add_argument('--dataset_path', nargs=1, type=str, default=["./datasets/Example/ds1368_tx_All_Data_14_2015_1005_174847.txt"])
+        parser.add_argument('--dataset_path', nargs=1, type=str, default=["./datasets/Example/test.txt"])
+        #parser.add_argument('--dataset_path', nargs=1, type=str,default=["./datasets/Example/ds531_student_step_All_Data_1711_2016_0420_073127.txt"])
 
-        parser.add_argument('--user_id', nargs=1, type=str, default=["Anon Student Id"])
-        parser.add_argument('--problem_id', nargs=1, type=str, default=["Step Name"])
-        parser.add_argument('--skill_name', nargs=1, type=str, default=["KC (Original)"])
-        parser.add_argument('--correctness', nargs=1, type=str, default=["Outcome"])
+        parser.add_argument('--user_id', nargs=1, type=str, default=["User_id"])
+        parser.add_argument('--problem_id', nargs=1, type=str, default=["Problem_id"])
+        parser.add_argument('--skill_name', nargs=1, type=str, default=["Skill_name"])
+        parser.add_argument('--correctness', nargs=1, type=str, default=["Correctness"])
         parser.add_argument('--section', nargs=1, type=str, default=["no", None])
-        parser.add_argument('--unit', nargs=1, type=str, default=['all', None])
+        parser.add_argument('--unit', nargs=1, type=str, default=['Unit', None])
         parser.add_argument('--unit_users', nargs=1, type=str, default=["No"])
 
         parser.add_argument('--item_wise', nargs=1, type=str, default=["False"])
@@ -69,7 +70,7 @@ class KCModel:
         parser.add_argument('--clustering_params', nargs=2, type=str, default=['same', 'euclidean'])
 
         parser.add_argument('--afm', nargs=1, type=str, default=[None])
-        parser.add_argument('--dafm', nargs=2, type=str, default=["fine-tuned", "No"])
+        parser.add_argument('--dafm', nargs=2, type=str, default=["dafm-afm", "Yes"])
         parser.add_argument('--dafm_params', nargs=3, type=str, default=["linear", "rmsprop", 0.1])
         parser.add_argument('--dense_size', nargs=1, type=str, default=["False"])
         parser.add_argument('--dkt', nargs=1, type=str, default=[None])
@@ -103,7 +104,6 @@ class KCModel:
         parser.add_argument('--accuracy_path', nargs=1, type=str, default=accuracy_path)
         args = parser.parse_args()
         self.args = args
-
 
         ## generating unique file name
         self.fname ='$'.join([self.args.section[0], self.args.dafm_params[0], self.args.dafm_params[1], str(self.args.dafm_params[2])])
@@ -350,6 +350,7 @@ class KCModel:
             initialize["dafm_type"] = "dafm-afm"
             dafm_obj = DeepAFM()
             dafm_model = dafm_obj.build(**initialize)
+            print("dafm_model is created")
 
             if self.args.load_model[0] == "True":
                 dafm_model = self.load_model(dafm_model, initialize["dafm_type"])
@@ -532,6 +533,8 @@ class KCModel:
 
     def main(self):
         shutil.rmtree(self.args.source_path + self.args.dataset[0]+ "log/", ignore_errors=True)
+        print(self.args.source_path)
+        print("start of log")
 
         obj_for_afm_dafm = afm_data_generator(self.args)
         data_for_afm_dafm = obj_for_afm_dafm.main()
@@ -560,5 +563,6 @@ class KCModel:
                 predictions.append(self.fit_predict_dkt(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]))
 
         print (predictions)
+print("Start this model")
 obj = KCModel()
 obj.main()

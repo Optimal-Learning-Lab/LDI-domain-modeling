@@ -113,7 +113,6 @@ class afm_data_generator():
 
     def main(self):
 
-
         # original_data, df_user_responses = f(args=self.args, problem_hierarchy=self.args.unit[0], make_unit_users=self.args.unit_users[0])
         original_data, df_user_responses = f(args=self.args, make_unit_users=self.args.unit_users[0])
         self.df_user_responses = df_user_responses

@@ -202,9 +202,11 @@ class DeepAFM:
         return model
 
     def fit(self, x_train, y_train, x_train_section, x_train_student, x_test, y_test, x_test_section, x_test_student, model, epochs=5, batch_size=32, loaded=False, validation=True):
+        print("start of model.fit function")
 
         x_train=x_train.astype(np.float32)
         y_train=y_train.astype(np.float32)
+        print("x_train and y_train")
         x_test=x_test.astype(np.float32)
         y_test=y_test.astype(np.float32)
 
@@ -294,6 +296,8 @@ class DeepAFM:
     def fit_batches(self, dafmdata_obj, model, max_epochs=30, earlyStop="val_loss", loaded=False):
 
         print ("Max Epochs", max_epochs)
+        print("297777777777777")
+        print(dafmdata_obj)
         loss_epoch = {"epoch":[], "loss":[], earlyStop:[], 'patience':[]}
         patience, epoch = 0, 1
         prev_best_val_loss = np.inf
@@ -302,24 +306,32 @@ class DeepAFM:
             best_model = model
 
         while (patience <= 2 and epoch <= max_epochs and loaded==False and (not self.dafm_type == "round-fine-tuned")):
+            print("306666")
+            print(self.dafm_type)
             counter += 1
             current_val_loss = 0
             total_loss, total_train_samples = 0, 0
             train = dafmdata_obj.data_generator1("train")
             test = dafmdata_obj.data_generator1("test")
+            print("line31333333333333")
             bc = 0
             for x_train, y_train, x_train_section, x_train_student, batch_size in train:
+                print("31666666666")
+                #print(x_train)
+
                 permutation = np.random.permutation(x_train.shape[0])
                 x_train = x_train[permutation].astype(np.float32)
                 y_train = y_train[permutation].astype(np.float32)
                 virtual_input1 = np.ones([np.shape(x_train)[0], np.shape(x_train)[1], 1]).astype(np.float32)
 
                 print ("Batch Number:", bc, np.shape(x_train))
+                print("len(x_train_student): ",len(x_train_student))
+
                 if len(x_train_student)==0:
                     if len(x_train_section) == 0:
-                        print("line 3088888888888888888")
-                        print(batch_size)
+                        print("start of model fit")
                         history_callback = model.fit([virtual_input1, x_train], y_train, batch_size=batch_size, epochs=1, verbose=0)
+                        print("end of train student")
                     else:
                         x_train_section = x_train_section[permutation]
                         history_callback = model.fit([virtual_input1, x_train, x_train_section], y_train, batch_size=batch_size, epochs=1, verbose=1)
@@ -332,6 +344,7 @@ class DeepAFM:
                         history_callback = model.fit([virtual_input1, x_train, x_train_section, x_train_student], y_train, batch_size=batch_size, epochs=1, verbose=1)
                 total_loss += history_callback.history["loss"][0] * len(x_train)
                 total_train_samples += len(x_train)
+
                 bc += 1
 
             if earlyStop == "rmse":
@@ -340,6 +353,9 @@ class DeepAFM:
             else:
                 current_avg_rmse = np.mean(self.bce_loss_batches(dafmdata_obj, model, utype="test"))
                 loss_epoch["val_loss"].append(current_avg_rmse)
+
+            print("total_train_samples: "+total_train_samples)
+            print(float(total_train_samples))
             loss_epoch["loss"].append(float(total_loss)/float(total_train_samples))
             loss_epoch["epoch"].append(counter)
             loss_epoch["patience"].append(patience)
