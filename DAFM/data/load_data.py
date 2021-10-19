@@ -1,7 +1,6 @@
 import pandas as pd
 import sys, os
 import random
-import numpy as np
 
 def preprocessing(dataset_path, columns_list):
 
@@ -19,6 +18,7 @@ def preprocessing(dataset_path, columns_list):
     ## any preprocessing can de done here
 
     data = data[columns_list]
+    print(data)
     return data
 
 def split(X, split_type="user_id", train_set=0.8):
@@ -97,7 +97,7 @@ def f(args, make_unit_users="No"):
 
     columns_dict = {args.user_id[0]: 'user_id', args.problem_id[0]: 'problem_id', \
                     args.skill_name[0]: 'skill_name', args.correctness[0]: 'correct', \
-                    args.unit[1]: 'unit', args.section[1]: 'section'}
+                    args.unit[1]: 'Unit', args.section[1]: 'section'}
     del columns_dict[None]
     data = preprocessing(args.dataset_path[0], list(columns_dict.keys()))
     data.rename(columns=columns_dict, inplace=True)

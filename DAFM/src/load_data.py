@@ -1,16 +1,13 @@
-import os
-import sys
-
 import numpy as np
 import pandas as pd
-
-from AFM.load_data import load_data
-from DAFM.load_data import DAFM_data
-from Qmatrix.qmatrix import Qmatrix
+import os, sys
+from data.load_data import f
 from Representation.dkt import DKT
 from Representation.problem2vec import P2V
-from data.load_data import f
-
+from Qmatrix.qmatrix import Qmatrix
+from AFM.load_data import load_data
+from DAFM.load_data import DAFM_data
+import pdb
 
 class afm_data_generator():
 
@@ -112,6 +109,7 @@ class afm_data_generator():
             return  [trainX, trainY, trainS, trainStudent, testX, testY, testS, testStudent, {'Q_jk_initialize':dafmdata_obj.Q_jk_initialize, 'student_count': len(dafmdata_obj.d_student), 'section_count':dafmdata_obj.section_count}]
 
     def main(self):
+
 
         # original_data, df_user_responses = f(args=self.args, problem_hierarchy=self.args.unit[0], make_unit_users=self.args.unit_users[0])
         original_data, df_user_responses = f(args=self.args, make_unit_users=self.args.unit_users[0])

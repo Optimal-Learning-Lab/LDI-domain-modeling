@@ -138,7 +138,6 @@ class DAFM_data:
         count = 0
         count_test = 0
         count_train = 0
-
         for user, problem, correct, section in zip(data_train["new_id"], data_train["problem_id"], data_train["correct"], section_list):
             if d_response_counter[user] < max_responses:
                 x_train[d_train_users[user], d_response_counter[user], d_problem[problem]]=1
@@ -159,17 +158,11 @@ class DAFM_data:
         return x_train, y_train, x_train_section, x_train_student
 
     def data_generator1(self, request):
-        print("Start of the data_generator1")
-        print(request)
 
         data = self.complete_data
-        print("use_batches:"+str(self.use_batches))
-        print(self.use_batches)
         if self.use_batches:
             if request == "train":
-                print("train")
                 self.save_batches(self.user_train, batch_type="train")
-                print("line 172222")
             elif request == "test":
                 self.save_batches(self.user_test, batch_type="test")
             else:
@@ -177,11 +170,8 @@ class DAFM_data:
             self.fname = self.args.fname+"$"+self.args.dafm[0] + "$" + self.args.dense_size[0]
             #'$'.join([self.args.dafm[0], self.args.dense_size[0], self.args.dafm_params[0], self.args.dafm_params[1], str(self.args.dafm_params[2])])
             request += "$"+self.fname
-            print(request)
-            print("self.batch_path: "+self.batch_path)
             files_list = os.listdir(self.batch_path+request)
             files_list = list(map(lambda x:self.batch_path+request+"/"+x, files_list))
-            print(files_list)
             if request == "train":
                 random.shuffle(files_list)
 
@@ -197,7 +187,6 @@ class DAFM_data:
                     x, y, x_s, x_student = self.onehot(data_onehot=t_data, d_problem=self.d_problem, max_responses=100*(int(file.split('_')[-1])+1), d_section=self.d_section, d_student=self.d_student, ttype=request)
                     batch_size = self.s_batch_response[file.split('_')[-1]]
                 yield x, y, x_s, x_student, batch_size
-        print("end of the data_generator1")
 
     def data_generator(self):
 
@@ -222,8 +211,7 @@ class DAFM_data:
             return x_train, y_train, x_train_section, x_train_student, x_test, y_test, x_test_section, x_test_student
 
     def save_batches(self, users, batch_type="train"):
-        print("save_batches")
-        print(self.path)
+
         self.batch_path = self.path + "/log/Batches/"
         self.fname =self.args.fname+"$"+self.args.dafm[0] + "$" + self.args.dense_size[0]
         # '$'.join([self.args.dafm[0], self.args.dense_size[0], self.args.dafm_params[0], self.args.dafm_params[1], str(self.args.dafm_params[2])])

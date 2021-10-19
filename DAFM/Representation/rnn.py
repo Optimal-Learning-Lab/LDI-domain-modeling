@@ -118,6 +118,7 @@ class DKTnet():
         b = K.cast(b, dtype='float32')
         ans = K.mean(K.binary_crossentropy(y_pred, y_true), axis=-1) * K.mean(b, axis=-1)
         count =  K.not_equal(ans, 0).sum()
+        print("custoem_bce")
         return  ans.sum()/count
 
     def predict_rmse(self, x_test, y_true, y_test_order, model, batch_size=32):

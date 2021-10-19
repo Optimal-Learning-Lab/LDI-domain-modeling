@@ -18,13 +18,12 @@ ITEMWISE TRUE and By Batch would not work
 """
 
 import argparse
-import os
-import shutil
 import sys
-from math import sqrt
-
+import os
 import numpy as np
 import pandas as pd
+from math import sqrt
+import shutil
 
 ## find the source file path on linux and appended to system path
 execution_path = sys.argv[0].split('/')
@@ -51,18 +50,16 @@ class KCModel:
 
         parser.add_argument('--dataset', nargs=1, type=str, default=["Research_test"])
         parser.add_argument('--dataset_path', nargs=1, type=str, default=["./datasets/Example/test.txt"])
-        #parser.add_argument('--dataset_path', nargs=1, type=str,default=["./datasets/Example/ds531_student_step_All_Data_1711_2016_0420_073127.txt"])
-
-        parser.add_argument('--user_id', nargs=1, type=str, default=["User_id"])
-        parser.add_argument('--problem_id', nargs=1, type=str, default=["Problem_id"])
-        parser.add_argument('--skill_name', nargs=1, type=str, default=["Skill_name"])
-        parser.add_argument('--correctness', nargs=1, type=str, default=["Correctness"])
+        parser.add_argument('--user_id', nargs=1, type=str, default=["user_id"])
+        parser.add_argument('--problem_id', nargs=1, type=str, default=["problem_id"])
+        parser.add_argument('--skill_name', nargs=1, type=str, default=["skill_name"])
+        parser.add_argument('--correctness', nargs=1, type=str, default=["correctness"])
         parser.add_argument('--section', nargs=1, type=str, default=["no", None])
-        parser.add_argument('--unit', nargs=1, type=str, default=['Unit', None])
+        parser.add_argument('--unit', nargs=1, type=str, default=['all', None])
         parser.add_argument('--unit_users', nargs=1, type=str, default=["No"])
 
         parser.add_argument('--item_wise', nargs=1, type=str, default=["False"])
-        parser.add_argument('--puser', nargs=1, type=str, default=["Orig"])
+        parser.add_argument('--puser', nargs=1, type=str, default=["sub"])
 
         parser.add_argument('--representation', nargs=1, type=str, default=[None])
         parser.add_argument('--w2v_params', nargs=2, type=str, default=[100, 20])
@@ -70,14 +67,14 @@ class KCModel:
         parser.add_argument('--clustering_params', nargs=2, type=str, default=['same', 'euclidean'])
 
         parser.add_argument('--afm', nargs=1, type=str, default=[None])
-        parser.add_argument('--dafm', nargs=2, type=str, default=["dafm-afm", "Yes"])
-        parser.add_argument('--dafm_params', nargs=3, type=str, default=["linear", "rmsprop", 0.1])
+        parser.add_argument('--dafm', nargs=2, type=str, default=["fine-tuned", "Yes"])
+        parser.add_argument('--dafm_params', nargs=3, type=str, default=["sigmoid", "rmsprop", 0.1])
         parser.add_argument('--dense_size', nargs=1, type=str, default=["False"])
         parser.add_argument('--dkt', nargs=1, type=str, default=[None])
         parser.add_argument('--theta', nargs=1, type=str, default=["False"])
 
         parser.add_argument('--skill_wise', nargs=1, type=str, default=["False"])
-        parser.add_argument('--save_model', nargs=1, type=str, default=["False"])
+        parser.add_argument('--save_model', nargs=1, type=str, default=["True"])
         parser.add_argument('--load_model', nargs=2, type=str, default=["False", "sub"])
         
         parser.add_argument('--binary',nargs=1,type=str, default=["False"])
@@ -87,11 +84,28 @@ class KCModel:
         user_path = "False"
 
         ## dataset path using its name
-        if args.dataset[0] == "Research_test":
-            data_path = args.dataset_path[0]
+        # if args.dataset[0] == "ASSISTments_12_13":
+        #     data_path = '/research/datasets/assistments_2012_2013/2012-2013-data-with-predictions-4-final_with_free_lunch.csv'
+        # elif args.dataset[0] == "ASSISTments_09_10":
+        #     data_path = '/research/datasets/assistments_2009_2010/assistments_2009_2010.csv'
+        # elif args.dataset[0] == "CognitiveTutor_bal_06_07":
+        #     data_path  = '/research/datasets/cognitive_tutor_2007_2009_kddcup/bridge_to_algebra_2006_2007_train.txt'
+        # elif args.dataset[0] == "CognitiveTutor_bal_08_09":
+        #     data_path  = '/research/datasets/cognitive_tutor_2007_2009_kddcup/bridge_to_algebra_2008_2009_train.txt'
+        # elif args.dataset[0] == "CognitiveTutor_al_06_07":
+        #     data_path  = '/research/datasets/cognitive_tutor_2007_2009_kddcup/algebra_2006_2007_train.txt'
+        # elif args.dataset[0] == "CognitiveTutor_al_08_09":
+        #     data_path   = '/research/datasets/cognitive_tutor_2007_2009_kddcup/algebra_2008_2009_train.txt'
+        # elif args.dataset[0] == "Geometry":
+        #     data_path = '/home/anant/datasets/Geometry96-97.txt'
+        # else:
+        #     data_path = args.dataset_path[0]
         # if not os.path.exists(data_path):
         #    print ("Error not valid dataset")
         #    sys.exit()
+
+        if args.dataset[0] == "Research_test":
+            data_path = args.dataset_path[0]
         source_path = os.getcwd() + '/'
         accuracy_path = os.getcwd() + '/'
 
@@ -104,6 +118,7 @@ class KCModel:
         parser.add_argument('--accuracy_path', nargs=1, type=str, default=accuracy_path)
         args = parser.parse_args()
         self.args = args
+
 
         ## generating unique file name
         self.fname ='$'.join([self.args.section[0], self.args.dafm_params[0], self.args.dafm_params[1], str(self.args.dafm_params[2])])
@@ -350,7 +365,6 @@ class KCModel:
             initialize["dafm_type"] = "dafm-afm"
             dafm_obj = DeepAFM()
             dafm_model = dafm_obj.build(**initialize)
-            print("dafm_model is created")
 
             if self.args.load_model[0] == "True":
                 dafm_model = self.load_model(dafm_model, initialize["dafm_type"])
@@ -532,9 +546,8 @@ class KCModel:
         w_Q_jk_dataframe.to_csv(self.args.accuracy_path+self.args.dataset[0]+"/SkillWise/"+fname+".qjk", sep=",")
 
     def main(self):
+
         shutil.rmtree(self.args.source_path + self.args.dataset[0]+ "log/", ignore_errors=True)
-        print(self.args.source_path)
-        print("start of log")
 
         obj_for_afm_dafm = afm_data_generator(self.args)
         data_for_afm_dafm = obj_for_afm_dafm.main()
@@ -563,6 +576,5 @@ class KCModel:
                 predictions.append(self.fit_predict_dkt(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]))
 
         print (predictions)
-print("Start this model")
 obj = KCModel()
 obj.main()
