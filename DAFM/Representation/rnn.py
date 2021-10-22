@@ -114,12 +114,21 @@ class DKTnet():
 
     def custom_bce(self, y_true, y_pred):
 
+        print(y_true)
+        print(y_pred)
         b = K.not_equal(y_true, -K.ones_like(y_true))
         b = K.cast(b, dtype='float32')
         ans = K.mean(K.binary_crossentropy(y_pred, y_true), axis=-1) * K.mean(b, axis=-1)
-        count =  K.not_equal(ans, 0).sum()
-        print("custoem_bce")
-        return  ans.sum()/count
+        # count =  K.not_equal(ans, 0).sum()
+        # print("custoem_bce")
+        # return  ans.sum()/count
+
+        booltensor=K.not_equal(ans, 0)
+
+        import tensorflow as tf
+        count = tf.reduce_sum(tf.cast(K.not_equal(ans, 0), tf.float32))
+        print("custom_bce")
+        return tf.reduce_sum(ans)/count
 
     def predict_rmse(self, x_test, y_true, y_test_order, model, batch_size=32):
 

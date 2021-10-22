@@ -67,6 +67,9 @@ class Qmatrix:
         problems = pd.read_csv(problem_path, sep=",", header=None)
         problems = list(problems[0].map(str))
         qmatrix = dict(zip(problems, list(map(str, list(labels)))))
+        # print("start of qmatrix")
+        # print(qmatrix)
+        # print("end of qmatrix")
         return qmatrix
 
     def total_skills(self, skill_train):

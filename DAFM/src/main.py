@@ -57,11 +57,12 @@ class KCModel:
         parser.add_argument('--section', nargs=1, type=str, default=["no", None])
         parser.add_argument('--unit', nargs=1, type=str, default=['all', None])
         parser.add_argument('--unit_users', nargs=1, type=str, default=["No"])
+        #parser.add_argument('--base_sequence_id', nargs=1, type=str, default=["base_sequence_id"])
 
         parser.add_argument('--item_wise', nargs=1, type=str, default=["False"])
         parser.add_argument('--puser', nargs=1, type=str, default=["sub"])
 
-        parser.add_argument('--representation', nargs=1, type=str, default=[None])
+        parser.add_argument('--representation', nargs=1, type=str, default=["rnn-correct"])
         parser.add_argument('--w2v_params', nargs=2, type=str, default=[100, 20])
         parser.add_argument('--rnn_params', nargs=1, type=str, default=[100])
         parser.add_argument('--clustering_params', nargs=2, type=str, default=['same', 'euclidean'])
@@ -73,7 +74,7 @@ class KCModel:
         parser.add_argument('--dkt', nargs=1, type=str, default=[None])
         parser.add_argument('--theta', nargs=1, type=str, default=["False"])
 
-        parser.add_argument('--skill_wise', nargs=1, type=str, default=["False"])
+        parser.add_argument('--skill_wise', nargs=1, type=str, default=["True"])
         parser.add_argument('--save_model', nargs=1, type=str, default=["True"])
         parser.add_argument('--load_model', nargs=2, type=str, default=["False", "sub"])
         
@@ -549,7 +550,8 @@ class KCModel:
 
         shutil.rmtree(self.args.source_path + self.args.dataset[0]+ "log/", ignore_errors=True)
 
-        obj_for_afm_dafm = afm_data_generator(self.args)
+        obj_for_afm_dafm = afm_data_generator(self.args) #generate the afm model
+
         data_for_afm_dafm = obj_for_afm_dafm.main()
         predictions = []
 

@@ -54,6 +54,11 @@ class afm_data_generator():
             qmatrix_obj.problemvector()
             qmatrix = qmatrix_obj.q_matrix()
             X_new_skill = qmatrix_obj.main(self.original_data, qmatrix)
+
+            print("Start of Q Matrix")
+            print(qmatrix)
+            print("End of Q Matrix")
+
         else:
             X_new_skill = self.original_data
         return X_new_skill
@@ -144,6 +149,9 @@ class afm_data_generator():
             sys.exit()
 
         X_matrix = self.generate_Xmatrix(input_data=data_with_repr)
+        print("the X_matrix")
+        print(X_matrix)
+
         if not (self.args.dkt[0]==None):
             print ('DKT loading data ....')
             yield self.generate_dkt(input_data=X_matrix)
@@ -155,4 +163,5 @@ class afm_data_generator():
         if not (self.args.dafm[0]==None):
             print ('DAFM loading data ....')
             dg = self.generate_dafm(input_data=X_matrix)
+            print(dg)
             yield dg
