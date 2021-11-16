@@ -5,7 +5,7 @@ library(gplots)
 library(LKT)
 library(rsvd)
 library(e1071)
-library(Rgraphviz)
+##library(Rgraphviz)
 library(Matrix)
 library(SparseM)
 library(LiblineaR)
@@ -76,7 +76,7 @@ tfData_test<-tfData[-partition, ]
 
 idx.validation <- createDataPartition(y = train$Student, p = 0.25, list = FALSE) # Draw a random, stratified sample of ratio p of the data
 tfData_validation <- train[idx.validation, ] #validation set with p = 0.8*0.25 = 0.2
-#tfData_training <- train[-idx.validation, ] #final train set with p= 0.8*0.75 = 0.6
+tfData_training <- train[-idx.validation, ] #final train set with p= 0.8*0.75 = 0.6
 
 #All data for training
 
@@ -107,7 +107,7 @@ model_str = 'fdtf'
 #rownames(tfData_validation)<-NULL
 
 #tfData_training_array<-np_array(array(tfData_training),dtype = NULL, order = "C")
-setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF")
+setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
 if (course_str=="Quiz"){
   concept_dim = 15
   lambda_t = 0
