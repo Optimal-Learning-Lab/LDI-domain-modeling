@@ -13,13 +13,12 @@ library(dplyr)
 library(paramtest)
 library(data.table)
 library(RColorBrewer)
-setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling")
-source("bar.R")
 
-setwd("C:/Users/ppavl/OneDrive - The University of Memphis/IES Data")
+#setwd("C:/Users/ppavl/OneDrive - The University of Memphis/IES Data")
+setwd("C:\\Users\\Liang Zhang\\Desktop\\2021_Fall\\LDIProject\\LDI-domain-modeling\\FDTF_R")
 #==========================Data Preparation==============================
-val<-setDT(read.table("ds1465_tx_All_Data_64_2016_0720_222352.txt",sep="\t", header=TRUE,na.strings="NA",quote="",comment.char = ""))
-setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF")
+val<-setDT(read.table("ds1465_tx_All_Data_64_2016_0720_222352short.txt",sep="\t", header=TRUE,na.strings="NA",quote="",comment.char = ""))
+setwd("C:\\Users\\Liang Zhang\\Desktop\\2021_Fall\\LDIProject\\LDI-domain-modeling\\FDTF_R")
 
 val$CF..ansbin.<-ifelse(tolower(val$Outcome)=="correct",1,ifelse(tolower(val$Outcome)=="incorrect",0,-1))
 val$CF..ansbin.<-as.numeric(val$CF..ansbin.)
@@ -30,7 +29,6 @@ val$KC..Default.<-paste( val$KC..Default.,val$CF..Stimulus.Version.,gsub(" ","",
 
 index<-paste(val$Anon.Student.Id,val$KC..Default.)
 val$Attempts<-ave(val$Outcome,index,FUN =function(x) cumsum(x>-1))
-
 
 #create new dataframe for stroring the extracted columns from val
 myData<-data.frame("Anon.Student.Id"=val$Anon.Student.Id,"Attempts"=val$Attempts,"KC..Default"=val$KC..Default.,"CF..ansbin."=val$CF..ansbin.)
@@ -44,8 +42,6 @@ QuestionLevs<-unique(myData$KC..Default)
 myData$QuestionLevels<-factor(
   myData$KC..Default, levels=QuestionLevs, labels=seq_along(QuestionLevs)
 )
-
-
 
 tfData<-data.frame(as.numeric(myData$StudentLevels)-1,as.numeric(myData$Attempts)-1,as.numeric(myData$QuestionLevels)-1,as.numeric(myData$CF..ansbin.))
 header1<-"Student"
@@ -99,15 +95,15 @@ model_str = 'fdtf'
 
 #tfData_training<-as.matrix(sapply(tfData_training, as.numeric))
 #tfData_validation<-as.matrix(sapply(tfData_validation, as.numeric))
+#colnames(tfData_training)<-NULL
 
 #Store Each Row of a Data Frame in a List
-#colnames(tfData_training)<-NULL
 #colnames(tfData_validation)<-NULL
 #rownames(tfData_training)<-NULL
 #rownames(tfData_validation)<-NULL
 
 #tfData_training_array<-np_array(array(tfData_training),dtype = NULL, order = "C")
-setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
+#setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
 if (course_str=="Quiz"){
   concept_dim = 15
   lambda_t = 0
@@ -253,8 +249,8 @@ if (course_str=="Quiz"){
     }
 
     #Output the best Q matrix
-    print(model$Q)
-    Q<<-model$Q
+    Q<-model$Q
+    T<-model$T
 
     test_set <- data.frame(apply(test_set, 2, function(x) as.numeric(as.character(x))))
 
@@ -275,15 +271,40 @@ if (course_str=="Quiz"){
 
 }
 
+#library(tensorr)
+library(rTensor)
 
+T<-as.tensor(model$T)
+Q<-t(as.matrix(model$Q))
+dim(T)
+dim(Q)
 
-df<-Q
+#Get the optimized tensor, students*attempts*questions
+Opt_Tensor<-ttm(T,Q,3)
+
+Num_Students<-Opt_Tensor@modes[1]
+Num_Attempts<-Opt_Tensor@modes[2]
+Num_Questions<-Opt_Tensor@modes[3]
+dim(Opt_Tensor)
+
+#Specify the q-matrix by tensor slice
+Opt_Tensor[,8,]
+
+#Q is q-matrix of the concepts versus questions, you may use other 1-matrix
+df<-t(Q)
+
 colnames(df)<-QuestionLevs
 
+#parameters
+posKC<-3
+usethresh<-FALSE
+KCthresh<-.2
+usethreshm<-TRUE
+KCthreshm<-.2
+RSVDcomp<-2
 
-
-
-
+source("LKTfunctions.R")
+source("bar.R")
 
 x<<-data.frame()
 

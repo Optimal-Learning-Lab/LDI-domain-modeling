@@ -20,6 +20,7 @@ setwd("C:\\Users\\Liang Zhang\\Desktop\\2021_Fall\\LDIProject\\LDI-domain-modeli
 val<-setDT(read.table("ds1465_tx_All_Data_64_2016_0720_222352short.txt",sep="\t", header=TRUE,na.strings="NA",quote="",comment.char = ""))
 setwd("C:\\Users\\Liang Zhang\\Desktop\\2021_Fall\\LDIProject\\LDI-domain-modeling\\FDTF_R")
 
+
 val$CF..ansbin.<-ifelse(tolower(val$Outcome)=="correct",1,ifelse(tolower(val$Outcome)=="incorrect",0,-1))
 val$CF..ansbin.<-as.numeric(val$CF..ansbin.)
 val<-val[val$CF..ansbin.!=-1,]

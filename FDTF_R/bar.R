@@ -5,12 +5,12 @@ testKCmodel<-function (iter,posKC,KCthreshm,RSVDcomp,valtemp){
   #==========================Reduce matrix================================
   reducedmatrix<-rsvd(df,RSVDcomp)
   rownames(reducedmatrix$v)<-colnames(df)
-  print(reducedmatrix$v)
+  #print(reducedmatrix$v)
   
   #==========================cluster matrix==============================
   cm <- kmeans(reducedmatrix$v,centers=posKC) #(cmeans(reducedmatrix$v,centers=posKC))
   
-  print(cm$membership)
+  #print(cm$membership)
 
   #=================extrapolate KC model==============
    #if(usethresh) {
@@ -29,7 +29,7 @@ testKCmodel<-function (iter,posKC,KCthreshm,RSVDcomp,valtemp){
   colnames(KCmodel)[1] <- "AC"
   KCmodel$AC<-as.character(KCmodel$AC)
   KCmodel$rows<-rownames(KCmodel)
-  print(KCmodel$rows)
+  #print(KCmodel$rows)
   
   valtemp<-merge(valtemp,
                  KCmodel,
@@ -56,9 +56,9 @@ testKCmodel<-function (iter,posKC,KCthreshm,RSVDcomp,valtemp){
   modelob3<-LKT(data=rlvl(valtemp),components=c("Anon.Student.Id","KC..Default."),
                 features=c("intercept","intercept"),
                 fixedpars=c(.9,.7),interc=TRUE,verbose=FALSE)
-  cat(paste(posKC,KCthreshm,RSVDcomp,modelob$r2,
-            modelob2$r2,mean(modelob$subjectrmse$x),
-            mean(modelob2$subjectrmse$x),(modelob$r2-modelob2$r2)/(modelob2$r2),(modelob$r2-modelob2$r2)/(modelob2$r2-modelob3$r2),"\n",sep=","))
+  #cat(paste(posKC,KCthreshm,RSVDcomp,modelob$r2,
+  #          modelob2$r2,mean(modelob$subjectrmse$x),
+  #          mean(modelob2$subjectrmse$x),(modelob$r2-modelob2$r2)/(modelob2$r2),(modelob$r2-modelob2$r2)/(modelob2$r2-modelob3$r2),"\n",sep=","))
   x<<-rbind(x,c(posKC,RSVDcomp,modelob$r2,(modelob$r2-modelob2$r2)/(modelob2$r2),(modelob$r2-modelob2$r2)/(modelob2$r2-modelob3$r2)))
 
   y1<<-modelob$coefs
