@@ -401,9 +401,6 @@ class FDTF(object):
         # reset to previous T, Q
         self.T = best_T
         self.Q = best_Q
-        print("The matrices Q start ")
-        print(self.Q)
-        print("The matrices Q end ")
         sys.stdout.flush()
         self.bias_s = best_bias_s
         self.bias_t = best_bias_t

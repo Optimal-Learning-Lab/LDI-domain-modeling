@@ -249,7 +249,6 @@ if (course_str=="Quiz"){
       model$train_data<-rbind(model$train_data,test_set)
     }
 
-    #Output the best Q matrix
     Q<-model$Q
     T<-model$T
 
@@ -288,11 +287,16 @@ Num_Attempts<-Opt_Tensor@modes[2]
 Num_Questions<-Opt_Tensor@modes[3]
 dim(Opt_Tensor)
 
-#Specify the q-matrix by tensor slice
-Opt_Tensor[,8,]
+#Specify the q-matrix by tensor slice, you may change the number "8" for other slice matrix of tensor Opt_Tensor
+Q_Matrix<-Opt_Tensor[,8,]
+print("Start of Q matrix")
+print(Q_Matrix)
+print("End of Q matrix")
 
-#Q is q-matrix of the concepts versus questions, you may use other 1-matrix
-df<-t(Q)
+print(Q_Matrix@data)
+
+#Q_Matrix is matrix of the students versus questions
+df<-as.matrix(Q_Matrix@data)
 
 colnames(df)<-QuestionLevs
 
@@ -328,5 +332,4 @@ rownames(myx)<-myx[,1]
 myx[,1]<-NULL
 barplot(as.matrix(myx),col=brewer.pal(9, "RdPu"),  legend = rownames(myx), beside = TRUE,horiz=TRUE,
         ylab = "Components",xlim=c(0,0.02),main="Cloze Data (SPARFA)",xlab="Proportion R-squared Gain")
-
 
