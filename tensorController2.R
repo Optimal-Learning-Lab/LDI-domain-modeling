@@ -15,10 +15,13 @@ library(data.table)
 library(RColorBrewer)
 
 #setwd("C:/Users/ppavl/OneDrive - The University of Memphis/IES Data")
-setwd("C:\\Users\\Liang Zhang\\Desktop\\2021_Fall\\LDIProject\\LDI-domain-modeling\\FDTF_R")
+#setwd("C:\\Users\\Liang Zhang\\Desktop\\2021_Fall\\LDIProject\\LDI-domain-modeling\\FDTF_R")
+
+setwd("C:/Users/ppavl/OneDrive - The University of Memphis/IES Data")
 #==========================Data Preparation==============================
-val<-setDT(read.table("ds1465_tx_All_Data_64_2016_0720_222352short.txt",sep="\t", header=TRUE,na.strings="NA",quote="",comment.char = ""))
-setwd("C:\\Users\\Liang Zhang\\Desktop\\2021_Fall\\LDIProject\\LDI-domain-modeling\\FDTF_R")
+val<-setDT(read.table("ds1465_tx_All_Data_64_2016_0720_222352.txt",sep="\t", header=TRUE,na.strings="NA",quote="",comment.char = ""))
+#setwd("C:\\Users\\Liang Zhang\\Desktop\\2021_Fall\\LDIProject\\LDI-domain-modeling\\FDTF_R")
+setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
 
 val$CF..ansbin.<-ifelse(tolower(val$Outcome)=="correct",1,ifelse(tolower(val$Outcome)=="incorrect",0,-1))
 val$CF..ansbin.<-as.numeric(val$CF..ansbin.)
@@ -303,7 +306,7 @@ usethreshm<-TRUE
 KCthreshm<-.2
 RSVDcomp<-2
 
-source("LKTfunctions.R")
+#source("LKTfunctions.R")
 source("bar.R")
 
 x<<-data.frame()
@@ -326,6 +329,6 @@ myx<-myx[-1,]
 rownames(myx)<-myx[,1]
 myx[,1]<-NULL
 barplot(as.matrix(myx),col=brewer.pal(9, "RdPu"),  legend = rownames(myx), beside = TRUE,horiz=TRUE,
-        ylab = "Components",xlim=c(0,0.02),main="Cloze Data (SPARFA)",xlab="Proportion R-squared Gain")
+        ylab = "Components",xlim=c(0,0.02),main="Cloze Data (Tensor)",xlab="Proportion R-squared Gain")
 
 
