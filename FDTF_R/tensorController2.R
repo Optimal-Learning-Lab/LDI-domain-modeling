@@ -290,10 +290,9 @@ dim(Opt_Tensor)
 #Specify the q-matrix by tensor slice, you may change the number "8" for other slice matrix of tensor Opt_Tensor
 Q_Matrix<-Opt_Tensor[,8,]
 print("Start of Q matrix")
-print(Q_Matrix)
+print(Q_Matrix@data)
 print("End of Q matrix")
 
-print(Q_Matrix@data)
 
 #Q_Matrix is matrix of the students versus questions
 df<-as.matrix(Q_Matrix@data)
