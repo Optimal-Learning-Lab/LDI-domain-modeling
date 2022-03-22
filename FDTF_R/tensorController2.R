@@ -280,23 +280,25 @@ dim(T)
 dim(Q)
 
 #Get the optimized tensor, students*attempts*questions
-Opt_Tensor<-ttm(T,Q,3)
+#Opt_Tensor<-ttm(T,Q,3)
 
-Num_Students<-Opt_Tensor@modes[1]
-Num_Attempts<-Opt_Tensor@modes[2]
-Num_Questions<-Opt_Tensor@modes[3]
-dim(Opt_Tensor)
+#Num_Students<-Opt_Tensor@modes[1]
+#Num_Attempts<-Opt_Tensor@modes[2]
+#Num_Questions<-Opt_Tensor@modes[3]
+#dim(Opt_Tensor)
 
 #Specify the q-matrix by tensor slice, you may change the number "8" for other slice matrix of tensor Opt_Tensor
-Q_Matrix<-Opt_Tensor[,8,]
-print("Start of Q matrix")
-print(Q_Matrix@data)
-print("End of Q matrix")
-
+#Q_Matrix<-Opt_Tensor[,8,]
+#print("Start of Q matrix")
+#print(Q_Matrix@data)
+#print("End of Q matrix")
 
 #Q_Matrix is matrix of the students versus questions
-df<-as.matrix(Q_Matrix@data)
+#df<-as.matrix(Q_Matrix@data)
 
+#Q matrix is Q <-Q<-t(as.matrix(model$Q)), Number of Questions * Number of Concepts
+
+df<-t(Q)
 colnames(df)<-QuestionLevs
 
 #parameters
