@@ -61,7 +61,6 @@ class FDTF(object):
         self.bias_t = np.zeros(self.num_attempts)
         self.bias_q = np.zeros(self.num_questions)
         
-        
         self.global_bias = np.mean(self.train_data, axis=0)[3]
     def __getstate__(self):
         """
@@ -123,7 +122,7 @@ class FDTF(object):
             square_loss_q += (obs - pred) ** 2
             q_count += 1
 
-        print("square loss {}".format(square_loss_q))
+        #print("square loss {}".format(square_loss_q))
 
         reg_T = LA.norm(self.T) ** 2  # regularization on tensor T
         reg_Q = LA.norm(self.Q) ** 2  # regularization on matrix Q
@@ -142,6 +141,7 @@ class FDTF(object):
                         LA.norm(self.bias_s) ** 2 + LA.norm(self.bias_q) ** 2)
  
         loss = square_loss_q + reg_features + reg_bias
+        print("Overall Loss {}".format(loss))
         return loss, q_count, q_rmse, reg_features, reg_bias
 
 

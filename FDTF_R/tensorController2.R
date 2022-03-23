@@ -237,26 +237,35 @@ if (course_str=="Quiz"){
 
     source_python("RestartTraining.py")
 
-    for (test_attempt in test_start_attempt:model$num_attempts){
+    perf_dict<-dict()
+    for (test_attempt in test_start_attempt:(model$num_attempts-1)){
+
       model$current_test_attempt<-test_attempt
       model$lr<-lr
       restart_training(model)
-      print("Start Training")
+      print(paste("Start the ",test_attempt,"th Training"))
       train_perf = model$training()
+      print(paste("End the ",test_attempt,"th Training"))
 
       test_set<-data.frame();
-      test_set<-test_data[test_data[,2]==test_start_attempt,]
+      test_set<-test_data[test_data[,2]==model$current_test_attempt,]
       model$train_data<-rbind(model$train_data,test_set)
+      test_set <- data.frame(apply(test_set, 2, function(x) as.numeric(as.character(x))))
+      test_perf <-model$testing(test_set)
+
+      if(is.null(py_get_item(perf_dict, 'test_attempt', silent = TRUE))){
+        perf_dict$test_attempt<-dict()
+        perf_dict$test_attempt$train<-train_perf
+        if(validation){
+          perf_dict$test_attempt$val<-test_perf
+        }else{
+          perf_dict$test_attempt$test<-test_perf
+        }
+      }
     }
 
     Q<-model$Q
     T<-model$T
-
-    test_set <- data.frame(apply(test_set, 2, function(x) as.numeric(as.character(x))))
-
-    test_perf <-model$testing(test_set)
-
-    perf_dict<-dict()
 
     overall_perf<-model$eval(model$test_obs_list,model$test_pred_list)
     if(validation){
@@ -264,9 +273,6 @@ if (course_str=="Quiz"){
     }else{
       perf_dict$test<-overall_perf
     }
-
-    print(perf_dict)
-
   }
 
 }
@@ -324,7 +330,6 @@ y2[grepl("logsucAC",rownames(y1)),]
 y2[grepl("logfailAC",rownames(y1)),]
 
 x$KCs <- sprintf('%i KCs', x$KCs)
-
 
 myx<-dcast(x, KCs ~ Components, value.var="R-squared Gain") #reshape to wide data format
 myx[10,]<-myx[1,]
