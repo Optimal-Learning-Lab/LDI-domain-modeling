@@ -15,11 +15,9 @@ library(data.table)
 library(RColorBrewer)
 
 #setwd("C:/Users/ppavl/OneDrive - The University of Memphis/IES Data")
-setwd("C:\\Users\\Liang Zhang\\Desktop\\2021_Fall\\LDIProject\\LDI-domain-modeling\\FDTF_R")
+setwd("C:\\Users\\Liang Zhang\\Desktop\\2022_Spring\\LDI\\LDI-domain-modeling\\FDTF_R")
 #==========================Data Preparation==============================
 val<-setDT(read.table("ds1465_tx_All_Data_64_2016_0720_222352short.txt",sep="\t", header=TRUE,na.strings="NA",quote="",comment.char = ""))
-setwd("C:\\Users\\Liang Zhang\\Desktop\\2021_Fall\\LDIProject\\LDI-domain-modeling\\FDTF_R")
-
 
 val$CF..ansbin.<-ifelse(tolower(val$Outcome)=="correct",1,ifelse(tolower(val$Outcome)=="incorrect",0,-1))
 val$CF..ansbin.<-as.numeric(val$CF..ansbin.)
@@ -106,10 +104,10 @@ model_str = 'fdtf'
 #tfData_training_array<-np_array(array(tfData_training),dtype = NULL, order = "C")
 #setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
 if (course_str=="Quiz"){
-  concept_dim = 15
-  lambda_t = 0
+  concept_dim = 10
+  lambda_t = 0.01
   lambda_q = 0.01
-  lambda_bias = 0
+  lambda_bias = 0.0001
   slr = 0.5
   lr = 0.1
   max_iter = 30
@@ -128,8 +126,6 @@ if (course_str=="Quiz"){
     para$metrics=metrics
 
     para$validation=validation
-
-    #print(para)
 
     ###################################def run_fdtf_exp###########################
     if(course_str == "Quiz"){
@@ -242,7 +238,7 @@ if (course_str=="Quiz"){
 
       model$current_test_attempt<-test_attempt
       model$lr<-lr
-      restart_training(model)
+      #restart_training(model)
       print(paste("Start the ",test_attempt,"th Training"))
       train_perf = model$training()
       print(paste("End the ",test_attempt,"th Training"))
@@ -262,6 +258,8 @@ if (course_str=="Quiz"){
           perf_dict$test_attempt$test<-test_perf
         }
       }
+
+      print(test_perf)
     }
 
     Q<-model$Q
@@ -273,9 +271,10 @@ if (course_str=="Quiz"){
     }else{
       perf_dict$test<-overall_perf
     }
-  }
 
+  }
 }
+
 
 #library(tensorr)
 library(rTensor)

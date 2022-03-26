@@ -145,7 +145,7 @@ class FDTF(object):
         return loss, q_count, q_rmse, reg_features, reg_bias
 
 
-    def _grad_T_ij(self, student, attempt, index, obs=None, resource=None):
+    def _grad_T_ij(self, student, attempt, index, obs, resource=None):
         """
         compute the gradient of loss w.r.t a specific student j's knowledge at
         a specific attempt i: T_{i,j,:},
@@ -170,7 +170,7 @@ class FDTF(object):
         return grad
 
 
-    def _grad_Q_k(self, student, attempt, question, obs=None):
+    def _grad_Q_k(self, student, attempt, question, obs):
         """
         compute the gradient of loss w.r.t a specific concept-question association
         of a question in Q-matrix,
@@ -193,7 +193,7 @@ class FDTF(object):
 
         return grad
 
-    def _grad_bias_s(self, student, attempt, material, obs=None, resource=None):
+    def _grad_bias_s(self, student, attempt, material, obs, resource=None):
         """
         compute the gradient of loss w.r.t a specific bias_s
         :param attempt:
@@ -214,7 +214,7 @@ class FDTF(object):
         return grad
 
 
-    def _grad_bias_t(self, student, attempt, material, obs=None, resource=None):
+    def _grad_bias_t(self, student, attempt, material, obs, resource=None):
         """
         compute the gradient of loss w.r.t a specific bias_a
         :param attempt:
@@ -233,7 +233,7 @@ class FDTF(object):
                 grad -= 2. * (obs - pred) + 2.0 * self.lambda_bias * self.bias_t[attempt]
         return grad
 
-    def _grad_bias_q(self, student, attempt, question, obs=None):
+    def _grad_bias_q(self, student, attempt, question, obs):
         """
         compute the gradient of loss w.r.t a specific bias_q
         :param attempt:
@@ -254,7 +254,7 @@ class FDTF(object):
 
         return grad
 
-    def _grad_global_bias(self, student, attempt, question, obs=None):
+    def _grad_global_bias(self, student, attempt, question, obs):
         """
         compute the gradient of loss w.r.t a specific bias_q
         :param attempt:
@@ -275,7 +275,7 @@ class FDTF(object):
 
         return grad
 
-    def _optimize_sgd(self, student, attempt, material, obs=None, resource=None):
+    def _optimize_sgd(self, student, attempt, material, obs, resource=None):
         """
         train the T and Q with stochastic gradient descent
         :param attempt:
