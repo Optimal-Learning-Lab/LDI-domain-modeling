@@ -105,12 +105,12 @@ model_str = 'fdtf'
 #setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
 if (course_str=="Quiz"){
   concept_dim = 10
-  lambda_t = 0.01
-  lambda_q = 0.01
+  lambda_t = 0.1   # lambda_t and lambda_q are hyper-parameters to control the weights of regularization term of T and Q.
+  lambda_q = 0.1
   lambda_bias = 0.0001
   slr = 0.5
   lr = 0.1
-  max_iter = 30
+  max_iter = 50
 
   validation = FALSE
   metrics = c("rmse", "mae", "auc")
@@ -252,6 +252,8 @@ if (course_str=="Quiz"){
 
     Q<-model$Q
     T<-model$T
+    Y<-model$Y #Y is the best tensor, numStudent*numAttempt*numQuestion
+    Q_matrix<-model$Q_matrix
 
     overall_perf<-model$eval(model$test_obs_list,model$test_pred_list)
     if(validation){
@@ -263,14 +265,9 @@ if (course_str=="Quiz"){
   }
 }
 
-
 #library(tensorr)
 library(rTensor)
-
-T<-as.tensor(model$T)
-Q<-t(as.matrix(model$Q))
-dim(T)
-dim(Q)
+Q_matrix=as.matrix(Q)  # but the element values are not the score
 
 #Get the optimized tensor, students*attempts*questions
 #Opt_Tensor<-ttm(T,Q,3)
@@ -291,7 +288,7 @@ dim(Q)
 
 #Q matrix is Q <-Q<-t(as.matrix(model$Q)), Number of Questions * Number of Concepts
 
-df<-t(Q)
+df<-Q_matrix
 colnames(df)<-QuestionLevs
 
 #parameters

@@ -6,6 +6,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, roc_auc_sco
 import warnings
 import sys
 import pandas as pd
+from scipy.special import expit
 
 warnings.filterwarnings("error")
 
@@ -45,7 +46,7 @@ class FDTF(object):
 
         self.metrics = config['metrics']
 
-        self.use_bias_t = False
+        self.use_bias_t = True
         self.use_global_bias = True
 
         self.binarized_question = True
@@ -56,8 +57,10 @@ class FDTF(object):
 
         self.T = np.random.random_sample((self.num_users, self.num_attempts,
                                           self.num_concepts))
-
         self.Q = np.random.random_sample((self.num_concepts, self.num_questions))
+        
+        self.Y=[0]
+        self.Q_matrix=[0]
         self.bias_s = np.zeros(self.num_users)
         self.bias_t = np.zeros(self.num_attempts)
         self.bias_q = np.zeros(self.num_questions)
@@ -99,7 +102,7 @@ class FDTF(object):
                 pred += self.bias_s[student] + self.bias_q[question]
 
         if self.binarized_question:
-            pred = sigmoid(pred)
+            pred = sigmoid(pred) # Sigmoid functions most often show a return value (y axis) in the range 0 to 1.
 
         return pred
 
@@ -408,7 +411,22 @@ class FDTF(object):
         self.bias_s = best_bias_s
         self.bias_t = best_bias_t
         self.bias_q = best_bias_q
-
+        Y=np.dot(self.T,self.Q)+self.global_bias
+        for i in range(0,self.num_users):
+            Y[i,:,:]=Y[i,:,:]+self.bias_s[i]
+        for j in range(0,self.num_attempts):
+            Y[:,j,:]=Y[:,j,:]+self.bias_t[j]
+        for k in range(0,self.num_questions):
+            Y[:,:,k]=Y[:,:,k]+self.bias_q[k]
+            
+        
+        Y=np.where(Y > 100, 1, Y)
+        Y=np.where(Y < -100, 0, Y)
+        
+        self.Q_matrix=np.mean(Y,axis=1)
+        
+        self.Y=expit(Y)
+        
         return train_perf[-1]
 
     def testing(self, test_data, validation=False):
