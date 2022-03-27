@@ -208,14 +208,8 @@ if (course_str=="Quiz"){
       print("done creation of model")
     }
 
-    print(validation)
 
-    if(validation){
-      test_data<-config$val
-    }else{
-      test_data<-rbind(config$test,config$val)
-      model$train_data<-rbind(model$train_data,config$val,config$test)
-    }
+    test_data<-config$test
 
     test_start_attempt<-NULL
     # since the test start attempt for different students are different,
@@ -234,33 +228,27 @@ if (course_str=="Quiz"){
     source_python("RestartTraining.py")
 
     perf_dict<-dict()
-    for (test_attempt in test_start_attempt:(model$num_attempts-1)){
+    #for (test_attempt in test_start_attempt:(model$num_attempts-1)){
 
-      model$current_test_attempt<-test_attempt
+      #model$current_test_attempt<-test_attempt
       model$lr<-lr
       #restart_training(model)
-      print(paste("Start the ",test_attempt,"th Training"))
+      #print(paste("Start the ",test_attempt,"th Training"))
       train_perf = model$training()
-      print(paste("End the ",test_attempt,"th Training"))
+      #print(paste("End the ",test_attempt,"th Training"))
 
       test_set<-data.frame();
-      test_set<-test_data[test_data[,2]==model$current_test_attempt,]
-      model$train_data<-rbind(model$train_data,test_set)
+
+      #test_set<-test_data[test_data[,2]==model$current_test_attempt,]
+      test_set=config$test
+
+      #model$train_data<-rbind(model$train_data,test_set)
       test_set <- data.frame(apply(test_set, 2, function(x) as.numeric(as.character(x))))
+
       test_perf <-model$testing(test_set)
 
-      if(is.null(py_get_item(perf_dict, 'test_attempt', silent = TRUE))){
-        perf_dict$test_attempt<-dict()
-        perf_dict$test_attempt$train<-train_perf
-        if(validation){
-          perf_dict$test_attempt$val<-test_perf
-        }else{
-          perf_dict$test_attempt$test<-test_perf
-        }
-      }
-
       print(test_perf)
-    }
+    #}
 
     Q<-model$Q
     T<-model$T

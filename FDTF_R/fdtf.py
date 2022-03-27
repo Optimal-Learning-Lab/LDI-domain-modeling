@@ -28,6 +28,7 @@ class FDTF(object):
         self.views = config['views']
         
         self.train_data = config['train']
+        self.test_data=config['test']
 
         self.num_users = int(config['num_users'])
         self.num_attempts = int(config['num_attempts'])
@@ -393,10 +394,12 @@ class FDTF(object):
                 loss_list.append(loss)
                 self.lr *= 0.5
                 iter_num += 1
+                print('iter_num: '+str(iter_num))
 
             else:
                 loss_list.append(loss)
                 iter_num += 1
+                print('iter_num: '+str(iter_num))
 
         # reset to previous T, Q
         self.T = best_T
