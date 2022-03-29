@@ -252,8 +252,7 @@ if (course_str=="Quiz"){
 
     Q<-model$Q
     T<-model$T
-    Y<-model$Y #Y is the best tensor, numStudent*numAttempt*numQuestion
-    Q_matrix<-model$Q_matrix
+    Y<-model$Y #Y is the estimated tensor, numStudent*numAttempt*numQuestion
 
     overall_perf<-model$eval(model$test_obs_list,model$test_pred_list)
     if(validation){

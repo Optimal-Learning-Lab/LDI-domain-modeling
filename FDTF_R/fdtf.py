@@ -60,7 +60,7 @@ class FDTF(object):
         self.Q = np.random.random_sample((self.num_concepts, self.num_questions))
         
         self.Y=[0]
-        self.Q_matrix=[0]
+        #self.Q_matrix=[0]
         self.bias_s = np.zeros(self.num_users)
         self.bias_t = np.zeros(self.num_attempts)
         self.bias_q = np.zeros(self.num_questions)
@@ -423,7 +423,7 @@ class FDTF(object):
         Y=np.where(Y > 100, 1, Y)
         Y=np.where(Y < -100, 0, Y)
         
-        self.Q_matrix=np.mean(Y,axis=1)
+        #self.Q_matrix=np.mean(Y,axis=1)
         
         self.Y=expit(Y)
         
