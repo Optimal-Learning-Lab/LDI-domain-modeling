@@ -21,8 +21,8 @@ setwd("C:/Users/ppavl/OneDrive - The University of Memphis/IES Data")
 #==========================Data Preparation==============================
 val<-setDT(read.table("ds1465_tx_All_Data_64_2016_0720_222352.txt",sep="\t", header=TRUE,na.strings="NA",quote="",comment.char = ""))
 #setwd("C:\\Users\\Liang Zhang\\Desktop\\2021_Fall\\LDIProject\\LDI-domain-modeling\\FDTF_R")
-#setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
-setwd("C:\\Users\\Liang Zhang\\Desktop\\2022_Spring\\LDI\\LDI-domain-modeling\\FDTF_R")
+setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
+#setwd("C:\\Users\\Liang Zhang\\Desktop\\2022_Spring\\LDI\\LDI-domain-modeling\\FDTF_R")
 
 val$CF..ansbin.<-ifelse(tolower(val$Outcome)=="correct",1,ifelse(tolower(val$Outcome)=="incorrect",0,-1))
 val$CF..ansbin.<-as.numeric(val$CF..ansbin.)
@@ -109,7 +109,7 @@ model_str = 'fdtf'
 #tfData_training_array<-np_array(array(tfData_training),dtype = NULL, order = "C")
 #setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
 if (course_str=="Quiz"){
-  concept_dim = 15
+  concept_dim = 10
   lambda_t = 0
   lambda_q = 0.01
   lambda_bias = 0
@@ -240,27 +240,36 @@ if (course_str=="Quiz"){
 
     source_python("RestartTraining.py")
 
-    for (test_attempt in test_start_attempt:model$num_attempts){
+
+    perf_dict<-dict()
+    for (test_attempt in test_start_attempt:(model$num_attempts-1)){
+
       model$current_test_attempt<-test_attempt
       model$lr<-lr
       restart_training(model)
-      print("Start Training")
+      print(paste("Start the ",test_attempt,"th Training"))
       train_perf = model$training()
+      print(paste("End the ",test_attempt,"th Training"))
 
       test_set<-data.frame();
-      test_set<-test_data[test_data[,2]==test_start_attempt,]
+      test_set<-test_data[test_data[,2]==model$current_test_attempt,]
       model$train_data<-rbind(model$train_data,test_set)
+      test_set <- data.frame(apply(test_set, 2, function(x) as.numeric(as.character(x))))
+      test_perf <-model$testing(test_set)
+
+      if(is.null(py_get_item(perf_dict, 'test_attempt', silent = TRUE))){
+        perf_dict$test_attempt<-dict()
+        perf_dict$test_attempt$train<-train_perf
+        if(validation){
+          perf_dict$test_attempt$val<-test_perf
+        }else{
+          perf_dict$test_attempt$test<-test_perf
+        }
+      }
     }
 
-    #Output the best Q matrix
     Q<-model$Q
     T<-model$T
-
-    test_set <- data.frame(apply(test_set, 2, function(x) as.numeric(as.character(x))))
-
-    test_perf <-model$testing(test_set)
-
-    perf_dict<-dict()
 
     overall_perf<-model$eval(model$test_obs_list,model$test_pred_list)
     if(validation){
@@ -268,9 +277,6 @@ if (course_str=="Quiz"){
     }else{
       perf_dict$test<-overall_perf
     }
-
-    print(perf_dict)
-
   }
 
 }
@@ -284,20 +290,27 @@ dim(T)
 dim(Q)
 
 #Get the optimized tensor, students*attempts*questions
-Opt_Tensor<-ttm(T,Q,3)
+#Opt_Tensor<-ttm(T,Q,3)
 
-Num_Students<-Opt_Tensor@modes[1]
-Num_Attempts<-Opt_Tensor@modes[2]
-Num_Questions<-Opt_Tensor@modes[3]
-dim(Opt_Tensor)
+#Num_Students<-Opt_Tensor@modes[1]
+#Num_Attempts<-Opt_Tensor@modes[2]
+#Num_Questions<-Opt_Tensor@modes[3]
+#dim(Opt_Tensor)
 
-#Specify the q-matrix by tensor slice
-Opt_Tensor[,8,]
+#Specify the q-matrix by tensor slice, you may change the number "8" for other slice matrix of tensor Opt_Tensor
+#Q_Matrix<-Opt_Tensor[,8,]
+#print("Start of Q matrix")
+#print(Q_Matrix@data)
+#print("End of Q matrix")
 
-#Q is q-matrix of the concepts versus questions, you may use other 1-matrix
+#Q_Matrix is matrix of the students versus questions
+#df<-as.matrix(Q_Matrix@data)
+
+#Q matrix is Q <-Q<-t(as.matrix(model$Q)), Number of Questions * Number of Concepts
+
 df<-t(Q)
-
 colnames(df)<-QuestionLevs
+
 
 #parameters
 posKC<-3
