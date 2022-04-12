@@ -6,6 +6,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, roc_auc_sco
 import warnings
 import sys
 import pandas as pd
+from scipy.special import expit
 
 warnings.filterwarnings("error")
 
@@ -28,6 +29,7 @@ class FDTF(object):
         self.views = config['views']
         
         self.train_data = config['train']
+        self.test_data=config['test']
 
         self.num_users = int(config['num_users'])
         self.num_attempts = int(config['num_attempts'])
@@ -44,7 +46,7 @@ class FDTF(object):
 
         self.metrics = config['metrics']
 
-        self.use_bias_t = False
+        self.use_bias_t = True
         self.use_global_bias = True
 
         self.binarized_question = True
@@ -55,8 +57,10 @@ class FDTF(object):
 
         self.T = np.random.random_sample((self.num_users, self.num_attempts,
                                           self.num_concepts))
-
         self.Q = np.random.random_sample((self.num_concepts, self.num_questions))
+        
+        self.Y=[0]
+        #self.Q_matrix=[0]
         self.bias_s = np.zeros(self.num_users)
         self.bias_t = np.zeros(self.num_attempts)
         self.bias_q = np.zeros(self.num_questions)
@@ -98,7 +102,7 @@ class FDTF(object):
                 pred += self.bias_s[student] + self.bias_q[question]
 
         if self.binarized_question:
-            pred = sigmoid(pred)
+            pred = sigmoid(pred) # Sigmoid functions most often show a return value (y axis) in the range 0 to 1.
 
         return pred
 
@@ -145,7 +149,7 @@ class FDTF(object):
         return loss, q_count, q_rmse, reg_features, reg_bias
 
 
-    def _grad_T_ij(self, student, attempt, index, obs=None, resource=None):
+    def _grad_T_ij(self, student, attempt, index, obs, resource=None):
         """
         compute the gradient of loss w.r.t a specific student j's knowledge at
         a specific attempt i: T_{i,j,:},
@@ -170,7 +174,7 @@ class FDTF(object):
         return grad
 
 
-    def _grad_Q_k(self, student, attempt, question, obs=None):
+    def _grad_Q_k(self, student, attempt, question, obs):
         """
         compute the gradient of loss w.r.t a specific concept-question association
         of a question in Q-matrix,
@@ -193,7 +197,7 @@ class FDTF(object):
 
         return grad
 
-    def _grad_bias_s(self, student, attempt, material, obs=None, resource=None):
+    def _grad_bias_s(self, student, attempt, material, obs, resource=None):
         """
         compute the gradient of loss w.r.t a specific bias_s
         :param attempt:
@@ -214,7 +218,7 @@ class FDTF(object):
         return grad
 
 
-    def _grad_bias_t(self, student, attempt, material, obs=None, resource=None):
+    def _grad_bias_t(self, student, attempt, material, obs, resource=None):
         """
         compute the gradient of loss w.r.t a specific bias_a
         :param attempt:
@@ -233,7 +237,7 @@ class FDTF(object):
                 grad -= 2. * (obs - pred) + 2.0 * self.lambda_bias * self.bias_t[attempt]
         return grad
 
-    def _grad_bias_q(self, student, attempt, question, obs=None):
+    def _grad_bias_q(self, student, attempt, question, obs):
         """
         compute the gradient of loss w.r.t a specific bias_q
         :param attempt:
@@ -254,7 +258,7 @@ class FDTF(object):
 
         return grad
 
-    def _grad_global_bias(self, student, attempt, question, obs=None):
+    def _grad_global_bias(self, student, attempt, question, obs):
         """
         compute the gradient of loss w.r.t a specific bias_q
         :param attempt:
@@ -275,7 +279,7 @@ class FDTF(object):
 
         return grad
 
-    def _optimize_sgd(self, student, attempt, material, obs=None, resource=None):
+    def _optimize_sgd(self, student, attempt, material, obs, resource=None):
         """
         train the T and Q with stochastic gradient descent
         :param attempt:
@@ -393,10 +397,12 @@ class FDTF(object):
                 loss_list.append(loss)
                 self.lr *= 0.5
                 iter_num += 1
+                print('iter_num: '+str(iter_num))
 
             else:
                 loss_list.append(loss)
                 iter_num += 1
+                print('iter_num: '+str(iter_num))
 
         # reset to previous T, Q
         self.T = best_T
@@ -405,7 +411,22 @@ class FDTF(object):
         self.bias_s = best_bias_s
         self.bias_t = best_bias_t
         self.bias_q = best_bias_q
-
+        Y=np.dot(self.T,self.Q)+self.global_bias
+        for i in range(0,self.num_users):
+            Y[i,:,:]=Y[i,:,:]+self.bias_s[i]
+        for j in range(0,self.num_attempts):
+            Y[:,j,:]=Y[:,j,:]+self.bias_t[j]
+        for k in range(0,self.num_questions):
+            Y[:,:,k]=Y[:,:,k]+self.bias_q[k]
+            
+        
+        Y=np.where(Y > 100, 1, Y)
+        Y=np.where(Y < -100, 0, Y)
+        
+        #self.Q_matrix=np.mean(Y,axis=1)
+        
+        self.Y=expit(Y)
+        
         return train_perf[-1]
 
     def testing(self, test_data, validation=False):
