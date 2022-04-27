@@ -1,4 +1,4 @@
-setwd("C:\\Users\\Liang Zhang\\Desktop\\2021_Fall\\LDIProject\\LDI-domain-modeling\\DAFM_R")
+setwd("C:\\Users\\Liang Zhang\\Desktop\\2022_Spring\\LDI\\LDI-domain-modeling\\DAFM_R")
 val<-read.table("ds1465_tx_All_Data_64_2016_0720_222352.txt",sep="\t", header=TRUE,na.strings="NA",quote="\"",comment.char = "")
 
 #transfer original data:

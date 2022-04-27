@@ -1,13 +1,16 @@
+import os
+import sys
+
 import numpy as np
 import pandas as pd
-import os, sys
-from data.load_data import f
-from Representation.dkt import DKT
-from Representation.problem2vec import P2V
-from Qmatrix.qmatrix import Qmatrix
+
 from AFM.load_data import load_data
 from DAFM.load_data import DAFM_data
-import pdb
+from Qmatrix.qmatrix import Qmatrix
+from Representation.dkt import DKT
+from Representation.problem2vec import P2V
+from data.load_data import f
+
 
 class afm_data_generator():
 
@@ -34,14 +37,24 @@ class afm_data_generator():
     def generate_representation(self, input_data):
 
         """ Appending vectors for problem using W2V or RNN """
+        print("start of  generation of representation")
         data_for_repr = input_data
-        repr_object =  self.representation_obj[self.args.representation[0]]
+        repr_object =self.representation_obj[self.args.representation[0]]
+        print(self.args.representation[0][:3])
+        #print(repr_object)
         if self.args.representation[0][:3] == "w2v":
             param = {'ws':int(self.args.w2v_params[1]) , 'vs':int(self.args.w2v_params[0]), 'mt':1, 'mc':0, 'data_path':data_for_repr}
             data_with_representation = repr_object.prob2vec(**param)
         else:
+
             param = {'activation':'linear', 'hidden_layer_size':int(self.args.rnn_params[0]), 'data':data_for_repr}
+
+            #param = {'data': data_for_repr,'activation': 'linear', 'hidden_layer_size': int(self.args.rnn_params[0])}
+            print("start of the data_with_representation")
+            #data_with_representation = repr_object.base_sequence_iddkt_representation(data_for_repr,'linear',int(self.args.rnn_params[0]))
+
             data_with_representation = repr_object.dkt_representation(**param)
+            print("end of the data_with_representation")
 
         return data_with_representation
 
@@ -53,11 +66,14 @@ class afm_data_generator():
             qmatrix_obj = Qmatrix(data=data_for_qmatrix, path=self.args.source_path, ctype="kmeans", csize=self.args.clustering_params[0], distance=self.args.clustering_params[1], uid='3')
             qmatrix_obj.problemvector()
             qmatrix = qmatrix_obj.q_matrix()
-            X_new_skill = qmatrix_obj.main(self.original_data, qmatrix)
-
-            print("Start of Q Matrix")
+            print("======use k-means to measure qmatrix, the output is question and labeled clustering=====")
             print(qmatrix)
-            print("End of Q Matrix")
+            print("=======use k-means to measure qmatrix, the output is question and labeled clustering======")
+
+            pd.set_option('display.max_columns', None)
+            #print(self.original_data.columns)
+            #print(self.original_data)
+            X_new_skill = qmatrix_obj.main(self.original_data, qmatrix)
 
         else:
             X_new_skill = self.original_data
@@ -87,9 +103,15 @@ class afm_data_generator():
     def generate_dafm(self, input_data):
 
         data_for_dafm = input_data
+
+        print("the input_data columns is {}".format(input_data.columns))
+
         dafmdata_obj = DAFM_data(args=self.args, complete_data=data_for_dafm, user_train=self.user_train, user_test=self.user_test, df_user_responses=self.df_user_responses, path=self.args.source_path+self.args.dataset[0], section=self.args.section[0], use_batches=self.use_batches)
 
         if self.args.skill_wise[0]=="True":
+
+            print("The SkillWise folds is {}".format(self.args.source_path+self.args.dataset[0]+"/SkillWise/"+"skill_index.csv"))
+
             if (not os.path.exists(self.args.source_path+self.args.dataset[0]+"/SkillWise/"+"skill_index.csv")) or (not os.path.exists(self.args.source_path+self.args.dataset[0]+"/SkillWise/"+"problem_index.csv")):
                 d_skill = dafmdata_obj.d_skill
                 skills = []
@@ -108,27 +130,36 @@ class afm_data_generator():
                 pd.DataFrame({"problem":problems, "index":index}).to_csv(self.args.source_path+self.args.dataset[0]+"/SkillWise/"+"problem_index.csv", sep=",", index=False)
 
         if self.use_batches:
+            print("Yes use_batches")
             return [dafmdata_obj, {'Q_jk_initialize':dafmdata_obj.Q_jk_initialize, 'section_count':dafmdata_obj.section_count, 'student_count': len(dafmdata_obj.d_student)}]
+
         else:
+            print("No use_batches")
             trainX, trainY, trainS, trainStudent, testX, testY, testS, testStudent = dafmdata_obj.data_generator()
             return  [trainX, trainY, trainS, trainStudent, testX, testY, testS, testStudent, {'Q_jk_initialize':dafmdata_obj.Q_jk_initialize, 'student_count': len(dafmdata_obj.d_student), 'section_count':dafmdata_obj.section_count}]
 
     def main(self):
 
-
         # original_data, df_user_responses = f(args=self.args, problem_hierarchy=self.args.unit[0], make_unit_users=self.args.unit_users[0])
         original_data, df_user_responses = f(args=self.args, make_unit_users=self.args.unit_users[0])
+
         self.df_user_responses = df_user_responses
+
+        print("in src\load_data the puser is " +self.args.puser[0])
+        print(self.args.source_path+"datasets/" +self.args.dataset[0]+"/Users/")
 
         temp = "" if self.args.puser[0] == "orig" else "sub"
         self.user_train = set(pd.read_csv(self.args.source_path+"datasets/" +self.args.dataset[0]+"/Users/"+temp+"train.csv", header=None)[0].map(str))
         self.user_test = set(pd.read_csv(self.args.source_path+"datasets/"+self.args.dataset[0]+"/Users/"+temp+"test.csv", header=None)[0].map(str))
-        print ("users:",len(self.user_train), len(self.user_test))
+        print("users:",len(self.user_train), len(self.user_test))
 
         self.original_data = original_data
         users = set(original_data["user_id"].map(str))
         self.user_train = list(users.intersection(self.user_train))
         self.user_test = list(users.intersection(self.user_test))
+
+        print(not (self.args.representation[0] == None))
+        print("original_data.columns is {}".format(original_data.columns))
 
         if (not (self.args.representation[0] == None)):
             if "skill_name" not in original_data.columns:
@@ -136,22 +167,27 @@ class afm_data_generator():
                     self.args.clustering_params[0] = "integer_"+str(self.args.clustering_params[0])
                 original_data["skill_name"] = ["^"]*len(original_data)
 
-            print ("Skill Model Using Word2Vec or DKT....")
+            print ("Skill Model Using Word2Vec or RNN-based DKT....")
             self.create_dict()
             data_with_repr = self.generate_representation(input_data=original_data)
+            print("Representation Matrix is {}".format(data_with_repr))
+            print("end of the creation of the data_with_repr")
 
         elif ("skill_name" in original_data.columns):
-            print ("Skill Model Using ", self.args.skill_name[0], "....")
+            print ("Skill Model is Using ", self.args.skill_name[0], "....")
             data_with_repr = original_data
 
         else:
             print ("No skill model found")
             sys.exit()
 
-        X_matrix = self.generate_Xmatrix(input_data=data_with_repr)
-        print("the X_matrix")
-        print(X_matrix)
+        X_matrix = self.generate_Xmatrix(input_data=data_with_repr) #
 
+        print("=========X_matrix clustering========")
+        print(X_matrix.head())
+        print(X_matrix.columns)
+        print("X_matrix['skill_name'] is {}".format((X_matrix['skill_name'])))
+        print("=========X_matrix clustering=========")
         if not (self.args.dkt[0]==None):
             print ('DKT loading data ....')
             yield self.generate_dkt(input_data=X_matrix)
@@ -163,5 +199,5 @@ class afm_data_generator():
         if not (self.args.dafm[0]==None):
             print ('DAFM loading data ....')
             dg = self.generate_dafm(input_data=X_matrix)
-            print(dg)
+            print('Done DAFM generation')
             yield dg

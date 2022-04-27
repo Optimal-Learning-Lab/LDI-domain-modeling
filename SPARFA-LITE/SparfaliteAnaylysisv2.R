@@ -20,7 +20,6 @@ KCthreshm<-.2
 RSVDcomp<-2
 
 
-
 setwd("C:/Users/ppavl/OneDrive/IES Data")
 val<-read.table("ds1465_tx_All_Data_64_2016_0720_222352.txt",sep="\t", header=TRUE,na.strings="NA",quote="",comment.char = "")
 
@@ -71,10 +70,10 @@ cm <- (cmeans(reducedmatrix$v,centers=posKC))
 #===========================visualizations====================
 
 library(factoextra)
-x<-fviz_cluster(list(data = reducedmatrix$v, cluster=cm$cluster), 
+x<-fviz_cluster(list(data = reducedmatrix$v, cluster=cm$cluster),
                 ellipse.type = "norm",
                 ellipse.level = .999,
-                palette = "jco", 
+                palette = "jco",
                 repel=TRUE,
                 ggtheme = theme_minimal(),xlab="",ylab="")
 plot(x)
@@ -205,20 +204,20 @@ modelob$r2
 
 
 
-# 
+#
 # val3<-computeSpacingPredictors(val3,"c1")
 # val3<-computeSpacingPredictors(val3,"c2")
 # val3<-computeSpacingPredictors(val3,"c3")
 # val3<-computeSpacingPredictors(val3,"c4")
-# 
+#
 # val3<-computeSpacingPredictors(val3,"KC..Default.")
-# 
+#
 # modelob<-LKT(data=val3,components=c("Anon.Student.Id","KC..Default.","KC..Default.",compKC,"KC..Default."),
 #              features=c("logitdec","logitdec","logafm","clogitdec","recency"),
 #              fixedpars=c(.9,.85,.85,NA),seedpars=c(NA,NA,NA,.3),interc=TRUE,verbose=TRUE)
 # modelob$r2
-# 
-# 
+#
+#
 # modelob<-LKT(data=val3,components=c("Anon.Student.Id","KC..Default.","KC..Default.","KC..Default."),
 #              features=c("logitdec","logitdec","logafm","recency"),
 #              fixedpars=c(.9,.85,.85,NA),seedpars=c(NA,NA,NA,.3),interc=TRUE,verbose=TRUE)

@@ -60,6 +60,7 @@ class P2V:
         else:
             data = data_path
         d = dict(zip(data["problem_id"].map(str), data["skill_name"].map(str)))
+
         d3 = dict(zip(data["problem_id"].map(str), data["base_sequence_id"].map(str)))
         if repr_type == "withCorrectness":
             def f(x):

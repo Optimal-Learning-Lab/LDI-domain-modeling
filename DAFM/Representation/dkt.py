@@ -62,6 +62,12 @@ class DKT:
 
         x_train, y_train, y_train_order = self.dkt_data(data)
         x_train_val, y_train_val, y_train_order_val = self.dkt_data(val_data)
+        print("dkt line 6555555555")
+
+        #My own code fix
+        p=self.p
+        up=self.up
+
         input_dim = len(p)
         input_dim_order = len(up)
         model = DKTnet(input_dim, input_dim_order, hidden_layer_size, activation, x_train, y_train, y_train_order, x_train_val, y_train_val, y_train_order_val)
@@ -72,8 +78,11 @@ class DKT:
 
         repr_type = self.repr_type
         d_skill = dict(zip(data["problem_id"].map(str), data["skill_name"].map(str)))
+        print("=============dkt_representation=================")
         data = data[["user_id", "problem_id", "correct"]]
         problems = sorted(list(set(data["problem_id"].map(str))))
+        print(problems)
+        print(len(problems))
         problem_correct = []
         p = {}
         up = {}
@@ -82,19 +91,32 @@ class DKT:
             p[i+"0"] = 2*j
             p[i+"1"] = 2*j + 1
             up[i] = j
+        #quatity of problems is doubled, p
+        #grand count of students is 478, users
+        #the max number of response is 119, max_response, how many times of reponse for each student.
         g = list(data.groupby(["user_id"]))
+        print("length of p is "+str(len(p)))
+        print(p)
+        print("length of up is " + str(len(up)))
+        print(up)
+        print("length of g is "+str(len(g)))
+
         responses = []
         for i in range(len(g)):
             responses.append(len(g[i][1]))
         max_responses = max(responses)-1
+
+        print("max_response is: "+str(max_responses))
+        print("len(up) is "+str(len(up)))
+
         users = len(g)
         input_shape = (users, max_responses, len(p))
-        x_train = np.zeros((users, max_responses, len(p)), dtype=np.bool)
-        y_train = np.zeros((users, max_responses, 1), dtype=np.uint8)
-        y_train_order = np.zeros((users, max_responses, len(up)), dtype=np.int8)
+        x_train = np.zeros((users, max_responses, len(p)), dtype=np.bool) # tensor structure
+        y_train = np.zeros((users, max_responses, 1), dtype=np.float32)  # ??????????????????why set 1, the datatype should be 'float32' instead of the 'uint8'
+        y_train_order = np.zeros((users, max_responses, len(up)), dtype=np.float32)
         from datetime import datetime
         st = datetime.now()
-        for i in range(len(g)):
+        for i in range(len(g)):    # len(g) is the total student number
             temp_data = g[i][1]
             counter = 0
             responses = min(max_responses, len(g[i][1])-1)
@@ -111,16 +133,20 @@ class DKT:
                 x_train[i] = np.concatenate((x1, x2))
             else:
                 x_train[i] = x1
+
         print ("Shapes of x_train, y_train, order for dkt:", np.shape(x_train), np.shape(y_train), np.shape(y_train_order))
+
         en = datetime.now()
         input_dim = len(p)
         input_dim_order = len(up)
         model = DKTnet(input_dim, input_dim_order, hidden_layer_size, activation, x_train, y_train, y_train_order)
         model = model.build()
         repr_matrix = 0
+
+        print("repr_type is {}".format(repr_type))
+
         for i in model.layers:
             for j in ((i.get_weights())):
-                # print (i, j.shape, input_dim_order, hidden_layer_size)
                 if repr_type=="dense" and list(np.shape(j)) == [input_dim_order, hidden_layer_size]:
                     repr_matrix = j
                     break
@@ -128,6 +154,10 @@ class DKT:
                     repr_matrix = j
                     break
         vector, problem_ids = [], []
+
+        print("repr_matrix is {}".format(repr_matrix))
+        print("repr_matrix shape is {}".format(repr_matrix.shape))
+
         for i, j in up.items():
             problem_ids.append(i)
             if repr_type=="correct-incorrect":
@@ -137,11 +167,15 @@ class DKT:
             elif repr_type=="incorrect":
                 vector.append(list(repr_matrix[p[i+"0"]]))
             elif repr_type=="dense":
-                vector.append(list(repr_matrix[up[i]]))
+                print("====dense=====")
+                print('i is {}'.format(i))
+                print('up is {}'.format(up))
+                vector.append(list(repr_matrix[up[str(i)]]))
             else:
                 print ("Error")
-                pass
         skill_vec = list(map(lambda x:d_skill[x], problem_ids))
         X = pd.DataFrame({"problem_id":problem_ids, "vector":vector, "skill_name":skill_vec})
-        print ('Evaluation Done for dkt')
+        print("length of the vector is {}".format(len(vector)))
+        print("skill_vec is {}".format(skill_vec))
+        print ('Representation Done for dkt')
         return X

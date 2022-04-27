@@ -22,9 +22,14 @@ class DAFM_data:
             student = sorted(list(set(self.complete_data["user_id"].map(str))))
             self.d_student = {j:i for i, j in enumerate(student)}
         problem_ids = sorted(list(set(self.complete_data["problem_id"])))
+
+        print("problem_ids is {}".format(problem_ids))
+
         d_problem = {j:i for i,j in enumerate(problem_ids)}
         self.d_problem = d_problem
         self.steps = len(d_problem)
+
+        print("d_problem is {}".format(d_problem))
 
         g = list(self.complete_data.groupby(["user_id"]))
         responses = []
@@ -55,21 +60,39 @@ class DAFM_data:
         total_skills = []
         for skills in list(self.complete_data["skill_name"]):
             for skill in skills.split("~~"):
-                total_skills.append(skill)
+                #print("now skill is {}".format(skill))
+                total_skills.append(int(skill))
         total_skills = sorted(list(set(total_skills)))
+
+        print("total_skills is {}".format(total_skills))
+
         d_skill = {j:i for i, j in enumerate(total_skills)}
         self.d_skill = d_skill
         self.skills = len(total_skills)
+
+        print("d_skill is {}".format(d_skill))
+
+        print("len of self.skills is {}".format(self.skills))
+        print("len of d_problem is {}".format(self.steps))
+
         Q_jk_initialize = np.zeros((len(d_problem), len(total_skills)),dtype=np.float32 )
         for problem, skills in zip(self.complete_data["problem_id"], self.complete_data["skill_name"]):
+            #print("the current skills is {}".format(skills))
             for skill in skills.split("~~"):
-                Q_jk_initialize[d_problem[problem], d_skill[skill]] = 1
+                #print("current skill is {}".format(skill))
+                Q_jk_initialize[d_problem[problem], d_skill[int(skill)]] = 1
         self.Q_jk_initialize = Q_jk_initialize
+        print("self.Q_jk_initialize is {}".format(self.Q_jk_initialize))
 
         users = set(list(self.complete_data["user_id"]))
         self.user_train = list(users.intersection(set(user_train)))
+
+        #print("self.user_train is {}".format(self.user_train))
+
         self.user_test = list(users.intersection(set(user_test)))
         self.df_user_responses = df_user_responses
+        print("self.df_user_responses is {}".format(self.df_user_responses))
+
         if (not self.args.item_wise[0]=="False") and (args.puser[0]=="sub"):
             self.complete_data = complete_data[complete_data["user_id"].isin(self.user_train+self.user_test)]
             self.complete_data.index = list(range(len(self.complete_data)))
@@ -138,6 +161,7 @@ class DAFM_data:
         count = 0
         count_test = 0
         count_train = 0
+
         for user, problem, correct, section in zip(data_train["new_id"], data_train["problem_id"], data_train["correct"], section_list):
             if d_response_counter[user] < max_responses:
                 x_train[d_train_users[user], d_response_counter[user], d_problem[problem]]=1
@@ -158,11 +182,17 @@ class DAFM_data:
         return x_train, y_train, x_train_section, x_train_student
 
     def data_generator1(self, request):
+        print("Start of the data_generator1")
+        print(request)
 
         data = self.complete_data
+        print("use_batches:"+str(self.use_batches))
+        print(self.use_batches)
         if self.use_batches:
             if request == "train":
+                print("train")
                 self.save_batches(self.user_train, batch_type="train")
+                print("line 172222")
             elif request == "test":
                 self.save_batches(self.user_test, batch_type="test")
             else:
@@ -170,8 +200,11 @@ class DAFM_data:
             self.fname = self.args.fname+"$"+self.args.dafm[0] + "$" + self.args.dense_size[0]
             #'$'.join([self.args.dafm[0], self.args.dense_size[0], self.args.dafm_params[0], self.args.dafm_params[1], str(self.args.dafm_params[2])])
             request += "$"+self.fname
+            print(request)
+            print("self.batch_path: "+self.batch_path)
             files_list = os.listdir(self.batch_path+request)
             files_list = list(map(lambda x:self.batch_path+request+"/"+x, files_list))
+            print(files_list)
             if request == "train":
                 random.shuffle(files_list)
 
@@ -187,6 +220,7 @@ class DAFM_data:
                     x, y, x_s, x_student = self.onehot(data_onehot=t_data, d_problem=self.d_problem, max_responses=100*(int(file.split('_')[-1])+1), d_section=self.d_section, d_student=self.d_student, ttype=request)
                     batch_size = self.s_batch_response[file.split('_')[-1]]
                 yield x, y, x_s, x_student, batch_size
+        print("end of the data_generator1")
 
     def data_generator(self):
 
@@ -207,11 +241,12 @@ class DAFM_data:
                 x_train, y_train, x_train_section, x_train_student = self.onehot(data_onehot=training_data, d_problem=self.d_problem, max_responses=self.max_responses, d_section=self.d_section, d_student=self.d_student)
 
             x_test, y_test, x_test_section, x_test_student = self.onehot(data_onehot=testing_data, d_problem=self.d_problem, max_responses=self.max_responses, d_section=self.d_section,d_student=self.d_student, ttype="test")
-            print ("Shapes of the training and test items in the order x, y, x_section, x_student:", np.shape(x_train), np.shape(y_train), np.shape(x_train_section), np.shape(x_train_student), np.shape(x_test), np.shape(y_test), np.shape(x_test_section), np.shape(x_test_student))
+            print ("Shapes of the training and test items in the order x_train, y_train, x_train_section, x_train_student，x_test，y_test，x_test_section，x_test_student:", np.shape(x_train), np.shape(y_train), np.shape(x_train_section), np.shape(x_train_student), np.shape(x_test), np.shape(y_test), np.shape(x_test_section), np.shape(x_test_student))
             return x_train, y_train, x_train_section, x_train_student, x_test, y_test, x_test_section, x_test_student
 
     def save_batches(self, users, batch_type="train"):
-
+        print("save_batches")
+        print(self.path)
         self.batch_path = self.path + "/log/Batches/"
         self.fname =self.args.fname+"$"+self.args.dafm[0] + "$" + self.args.dense_size[0]
         # '$'.join([self.args.dafm[0], self.args.dense_size[0], self.args.dafm_params[0], self.args.dafm_params[1], str(self.args.dafm_params[2])])

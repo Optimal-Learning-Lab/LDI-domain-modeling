@@ -18,12 +18,13 @@ ITEMWISE TRUE and By Batch would not work
 """
 
 import argparse
-import sys
 import os
+import shutil
+import sys
+from math import sqrt
+
 import numpy as np
 import pandas as pd
-from math import sqrt
-import shutil
 
 ## find the source file path on linux and appended to system path
 execution_path = sys.argv[0].split('/')
@@ -50,33 +51,34 @@ class KCModel:
 
         parser.add_argument('--dataset', nargs=1, type=str, default=["Research_test"])
         parser.add_argument('--dataset_path', nargs=1, type=str, default=["./datasets/Example/test.txt"])
-        parser.add_argument('--user_id', nargs=1, type=str, default=["user_id"])
-        parser.add_argument('--problem_id', nargs=1, type=str, default=["problem_id"])
-        parser.add_argument('--skill_name', nargs=1, type=str, default=["skill_name"])
-        parser.add_argument('--correctness', nargs=1, type=str, default=["correctness"])
+        #parser.add_argument('--dataset_path', nargs=1, type=str,default=["./datasets/Example/ds531_student_step_All_Data_1711_2016_0420_073127.txt"])
+
+        parser.add_argument('--user_id', nargs=1, type=str, default=["User_id"])
+        parser.add_argument('--problem_id', nargs=1, type=str, default=["Problem_id"])
+        parser.add_argument('--skill_name', nargs=1, type=str, default=["Skill_name"])
+        parser.add_argument('--correctness', nargs=1, type=str, default=["Correctness"])
         parser.add_argument('--section', nargs=1, type=str, default=["no", None])
-        parser.add_argument('--unit', nargs=1, type=str, default=['all', None])
-        parser.add_argument('--unit_users', nargs=1, type=str, default=["No"])
-        #parser.add_argument('--base_sequence_id', nargs=1, type=str, default=["base_sequence_id"])
+        parser.add_argument('--unit', nargs=1, type=str, default=['Unit', 'Unit'])
+        parser.add_argument('--unit_users', nargs=1, type=str, default=["all"])
 
         parser.add_argument('--item_wise', nargs=1, type=str, default=["False"])
         parser.add_argument('--puser', nargs=1, type=str, default=["sub"])
 
-        parser.add_argument('--representation', nargs=1, type=str, default=["rnn-correct"])
+        parser.add_argument('--representation', nargs=1, type=str, default=["rnn-correct-incorrect"])
         parser.add_argument('--w2v_params', nargs=2, type=str, default=[100, 20])
-        parser.add_argument('--rnn_params', nargs=1, type=str, default=[100])
-        parser.add_argument('--clustering_params', nargs=2, type=str, default=['same', 'euclidean'])
+        parser.add_argument('--rnn_params', nargs=1, type=str, default=[20])
+        parser.add_argument('--clustering_params', nargs=2, type=str, default=['half', 'euclidean'])
 
         parser.add_argument('--afm', nargs=1, type=str, default=[None])
-        parser.add_argument('--dafm', nargs=2, type=str, default=["fine-tuned", "Yes"])
-        parser.add_argument('--dafm_params', nargs=3, type=str, default=["sigmoid", "rmsprop", 0.1])
+        parser.add_argument('--dafm', nargs=2, type=str, default=["fine-tuned", "No"])
+        parser.add_argument('--dafm_params', nargs=3, type=str, default=["sigmoid", "rmsprop", 0.01])
         parser.add_argument('--dense_size', nargs=1, type=str, default=["False"])
         parser.add_argument('--dkt', nargs=1, type=str, default=[None])
         parser.add_argument('--theta', nargs=1, type=str, default=["False"])
 
-        parser.add_argument('--skill_wise', nargs=1, type=str, default=["True"])
+        parser.add_argument('--skill_wise', nargs=1, type=str, default=["False"])
         parser.add_argument('--save_model', nargs=1, type=str, default=["True"])
-        parser.add_argument('--load_model', nargs=2, type=str, default=["False", "sub"])
+        parser.add_argument('--load_model', nargs=2, type=str, default=["False", "orig"])
         
         parser.add_argument('--binary',nargs=1,type=str, default=["False"])
 
@@ -85,28 +87,11 @@ class KCModel:
         user_path = "False"
 
         ## dataset path using its name
-        # if args.dataset[0] == "ASSISTments_12_13":
-        #     data_path = '/research/datasets/assistments_2012_2013/2012-2013-data-with-predictions-4-final_with_free_lunch.csv'
-        # elif args.dataset[0] == "ASSISTments_09_10":
-        #     data_path = '/research/datasets/assistments_2009_2010/assistments_2009_2010.csv'
-        # elif args.dataset[0] == "CognitiveTutor_bal_06_07":
-        #     data_path  = '/research/datasets/cognitive_tutor_2007_2009_kddcup/bridge_to_algebra_2006_2007_train.txt'
-        # elif args.dataset[0] == "CognitiveTutor_bal_08_09":
-        #     data_path  = '/research/datasets/cognitive_tutor_2007_2009_kddcup/bridge_to_algebra_2008_2009_train.txt'
-        # elif args.dataset[0] == "CognitiveTutor_al_06_07":
-        #     data_path  = '/research/datasets/cognitive_tutor_2007_2009_kddcup/algebra_2006_2007_train.txt'
-        # elif args.dataset[0] == "CognitiveTutor_al_08_09":
-        #     data_path   = '/research/datasets/cognitive_tutor_2007_2009_kddcup/algebra_2008_2009_train.txt'
-        # elif args.dataset[0] == "Geometry":
-        #     data_path = '/home/anant/datasets/Geometry96-97.txt'
-        # else:
-        #     data_path = args.dataset_path[0]
+        if args.dataset[0] == "Research_test":
+            data_path = args.dataset_path[0]
         # if not os.path.exists(data_path):
         #    print ("Error not valid dataset")
         #    sys.exit()
-
-        if args.dataset[0] == "Research_test":
-            data_path = args.dataset_path[0]
         source_path = os.getcwd() + '/'
         accuracy_path = os.getcwd() + '/'
 
@@ -119,7 +104,6 @@ class KCModel:
         parser.add_argument('--accuracy_path', nargs=1, type=str, default=accuracy_path)
         args = parser.parse_args()
         self.args = args
-
 
         ## generating unique file name
         self.fname ='$'.join([self.args.section[0], self.args.dafm_params[0], self.args.dafm_params[1], str(self.args.dafm_params[2])])
@@ -158,6 +142,10 @@ class KCModel:
         # validation must not be done when using complete training set
         if args.puser[0]=="orig":
             self.validation = False
+        print("the line 14555555555555555555")
+        print(self.dir_name)
+        print(self.pdir_name)
+        print(self.adir_name)
         print (args)
 
     def save_model(self, model, dafm_type=""):
@@ -174,7 +162,9 @@ class KCModel:
     def load_model(self, model, dafm_type=""):
 
         if self.args.puser[0]=="orig" and self.args.load_model[1]=="orig":
-            print ("Here")
+
+            print("args.puser is orig and load_model is orig")
+
             dir_name = self.apdir_name
         else:
             dir_name = self.adir_name
@@ -197,22 +187,23 @@ class KCModel:
             os.makedirs(dir_name+"Prediction/")
 
         d = {"RMSE":[rmse], "AIC":[AIC], "BIC":[BIC], "best epoch":[best_epoch], "dafm_type":[dafm_type], "section":[self.args.section[0]], "activation":[self.args.dafm_params[0]], "optimizer":[self.args.dafm_params[1]], "learning_rate":[self.args.dafm_params[2]], "theta":self.args.theta[0]}
-        if not (self.args.dense_size[0] == "False"):
-            d["dense_size"] = self.args.dense_size[0]
-        if self.args.skill_wise[0] == "False":
-            if self.args.puser[0] == "orig":
-                if self.args.save_model[0]=="True":
-                    pd.DataFrame(loss_epoch).to_csv(dir_name+"Losses/"+fname+".csv", sep=",", index=False)
-                    pd.DataFrame(d).to_csv(self.apdir_name+"Prediction/"+fname+".acc", sep=",", index=False)
-                else:
-                    pd.DataFrame(d).to_csv(self.apdir_name+fname+".acc", sep=",", index=False)
-                return
-            else:
-                pd.DataFrame(loss_epoch).to_csv(dir_name+"Losses/"+fname+".csv", sep=",", index=False)
-                pd.DataFrame(d).to_csv(dir_name+"Prediction/"+fname+".acc", sep=",", index=False)
-                pass
-        else:
-            print ("Not Saving")
+
+        # if not (self.args.dense_size[0] == "False"):
+        #     d["dense_size"] = self.args.dense_size[0]
+        # if self.args.skill_wise[0] == "False":
+        #     if self.args.puser[0] == "orig":
+        #         if self.args.save_model[0]=="True":
+        #             pd.DataFrame(loss_epoch).to_csv(dir_name+"Losses/"+fname+".csv", sep=",", index=False)
+        #             pd.DataFrame(d).to_csv(self.apdir_name+"Prediction/"+fname+".acc", sep=",", index=False)
+        #         else:
+        #             pd.DataFrame(d).to_csv(self.apdir_name+fname+".acc", sep=",", index=False)
+        #         return
+        #     else:
+        #         pd.DataFrame(loss_epoch).to_csv(dir_name+"Losses/"+fname+".csv", sep=",", index=False)
+        #         pd.DataFrame(d).to_csv(dir_name+"Prediction/"+fname+".acc", sep=",", index=False)
+        #         pass
+        # else:
+        #     print ("Not Saving")
 
     def fit_predict_afm(self, trainX, trainY, testX, testY, d_t):
 
@@ -228,6 +219,9 @@ class KCModel:
         predict_afm = afm_obj.predict(testX, testY, afm_model, d_t)
         f = open(fpath+fname, 'w')
         f.write(predict_afm)
+
+        print("AIC is {}".format(AIC))
+        print("BIC is {}".format(BIC))
         return [predict_afm, AIC, BIC]
 
     def fit_predict_dkt(self, trainX, trainY, trainY_order, testX, testY, testY_order, input_dim, input_dim_order):
@@ -251,6 +245,7 @@ class KCModel:
         initialize["learning_rate"] = self.args.dafm_params[2]
         initialize["binary"] = self.args.binary[0]
         Q_jk_initialize = np.copy(initialize["Q_jk_initialize"])
+
         # if self.args.dafm[0].split('_')[-1] == "double":
         #     Q_jk_initialize = np.concatenate([Q_jk_initialize, Q_jk_initialize], axis=1)
 
@@ -259,17 +254,21 @@ class KCModel:
             np.place(initialize["Q_jk_initialize"], initialize["Q_jk_initialize"]==1, [99])
 
         if self.args.dafm[0].split('_')[0] == "fine-tuned" or self.args.dafm[0].split('_')[0] == "round-fine-tuned":
+
+            print("============Start of afm prediction=================")
+
             initialize["dafm_type"] = "dafm-afm"
             dafm_obj = DeepAFM()
             dafm_model = dafm_obj.build(**initialize)
             if self.args.load_model[0] == "True":
+                print("line 259")
                 dafm_model = self.load_model(dafm_model, initialize["dafm_type"])
                 if self.args.skill_wise[0] == "True":
                     pass
                 else:
+                    print("line 264")
                     dafm_model, AIC, BIC, best_epoch, loss_epoch = dafm_obj.fit(trainX, trainY, trainS, trainStudent, testX, testY, testS, testStudent, dafm_model, loaded=True, validation=self.validation)
             else:
-
                 dafm_model, AIC, BIC, best_epoch, loss_epoch = dafm_obj.fit(trainX, trainY, trainS, trainStudent, testX, testY, testS, testStudent, dafm_model, validation=self.validation)
                 if self.args.save_model[0] == "True":
                     self.save_model(dafm_model, initialize["dafm_type"])
@@ -280,6 +279,11 @@ class KCModel:
                 self.save_qjk(dafm_model.get_layer("Q_jk").get_weights()[0], initialize["dafm_type"])
 
             predict_dafm = dafm_obj.predict(testX, testY, testS, testStudent, dafm_model)
+
+            print("rmse is {}".format(predict_dafm))
+            print("AIC is {}".format(AIC))
+            print("BIC is {}".format(BIC))
+
             self.save(predict_dafm, AIC, BIC, best_epoch, loss_epoch, initialize["dafm_type"])
             initialize["model1"] = dafm_model
 
@@ -299,6 +303,7 @@ class KCModel:
                         dafm_model, AIC, BIC, best_epoch, loss_epoch = dafm_obj.fit(trainX, trainY, trainS, trainStudent, testX, testY, testS, testStudent, dafm_model, loaded=True, validation=self.validation)
                 else:
                     dafm_model, AIC, BIC, best_epoch, loss_epoch = dafm_obj.fit(trainX, trainY, trainS, trainStudent, testX, testY, testS, testStudent, dafm_model, validation=self.validation)
+
                     if self.args.save_model[0] == "True":
                         self.save_model(dafm_model, initialize["dafm_type"])
 
@@ -309,11 +314,21 @@ class KCModel:
 
                 predict_dafm = dafm_obj.predict(testX, testY, testS, testStudent, dafm_model)
                 self.save(predict_dafm, AIC, BIC, best_epoch, loss_epoch, initialize["dafm_type"])
+
+                print("rmse is {}".format(predict_dafm))
+                print("AIC is {}".format(AIC))
+                print("BIC is {}".format(BIC))
+
                 initialize["model1"] = dafm_model
 
+        print("============End of afm prediction====================")
+
+        print("============Start of dafm prediction=================")
         initialize["dafm_type"] = self.args.dafm[0]
         dafm_obj = DeepAFM()
         dafm_model = dafm_obj.build(**initialize)
+
+        print("self.args.load_model[0] is {}".format(self.args.load_model[0]))
 
         if self.args.load_model[0] == "True":
             dafm_model = self.load_model(dafm_model, initialize["dafm_type"])
@@ -323,6 +338,7 @@ class KCModel:
                 dafm_model, AIC, BIC, best_epoch, loss_epoch = dafm_obj.fit(trainX, trainY, trainS, trainStudent, testX, testY, testS, testStudent, dafm_model, loaded=True, validation=self.validation)
         else:
             dafm_model, AIC, BIC, best_epoch, loss_epoch = dafm_obj.fit(trainX, trainY, trainS, trainStudent, testX, testY, testS, testStudent, dafm_model, validation=self.validation)
+
             if self.args.save_model[0] == "True":
                 self.save_model(dafm_model, initialize["dafm_type"])
 
@@ -331,12 +347,16 @@ class KCModel:
                 self.rmse_masking_skillwise(testY, y_pred, testX, Q_jk_initialize, initialize["dafm_type"])
                 self.save_qjk(dafm_model.get_layer("Q_jk").get_weights()[0], initialize["dafm_type"])
                 sys.exit()
+
         predict_dafm = dafm_obj.predict(testX, testY, testS, testStudent, dafm_model)
         # print ("s")
         # print ('SavingStarts')
         # pd.DataFrame(dafm_model.get_layer('Q_jk_dense').get_weights()[0]).to_csv('CogQjkDense.csv', sep=',', index=False)
         # sys.exit()
         self.save(predict_dafm, AIC, BIC, best_epoch, loss_epoch, initialize["dafm_type"])
+        print("rmse is {}".format(predict_dafm))
+        print("AIC is {}".format(AIC))
+        print("BIC is {}".format(BIC))
         return [predict_dafm, AIC, BIC]
 
     def fit_predict_batch_dafm(self, dafmdata_obj, initialize):
@@ -366,6 +386,7 @@ class KCModel:
             initialize["dafm_type"] = "dafm-afm"
             dafm_obj = DeepAFM()
             dafm_model = dafm_obj.build(**initialize)
+            print("dafm_model is created")
 
             if self.args.load_model[0] == "True":
                 dafm_model = self.load_model(dafm_model, initialize["dafm_type"])
@@ -392,6 +413,7 @@ class KCModel:
                 initialize["dafm_type"] = "fine-tuned"
                 dafm_obj = DeepAFM()
                 dafm_model = dafm_obj.build(**initialize)
+
 
                 if self.args.load_model[0] == "True":
                     dafm_model = self.load_model(dafm_model, initialize["dafm_type"])
@@ -431,6 +453,10 @@ class KCModel:
         # pd.DataFrame(dafm_model.get_layer('Q_jk_dense').get_weights()[0]).to_csv('CogQjkDense.csv', sep=',', index=False)
         predict_dafm = dafm_obj.predict_batches(dafmdata_obj, dafm_model)
         self.save(predict_dafm, AIC, BIC, best_epoch, loss_epoch, initialize["dafm_type"])
+
+        print("AIC is {}".format(AIC))
+        print("BIC is {}".format(BIC))
+
         return [predict_dafm, AIC, BIC]
 
     def rmse_masking_skillwise_batches(self, dafm_obj, dafmdata_obj, dafm_model, Q_jk_initialize, dafm_type=""):
@@ -547,17 +573,23 @@ class KCModel:
         w_Q_jk_dataframe.to_csv(self.args.accuracy_path+self.args.dataset[0]+"/SkillWise/"+fname+".qjk", sep=",")
 
     def main(self):
-
         shutil.rmtree(self.args.source_path + self.args.dataset[0]+ "log/", ignore_errors=True)
+        print(self.args.source_path)
+        print("start of log")
+        print(self.args)
+        print(not self.args.afm[0] == None)
+        print(not self.args.dafm[0] == None)
 
-        obj_for_afm_dafm = afm_data_generator(self.args) #generate the afm model
-
+        obj_for_afm_dafm = afm_data_generator(self.args)
         data_for_afm_dafm = obj_for_afm_dafm.main()
+
+        print("data_for_afm_dafm is {}".format(data_for_afm_dafm))
+
         predictions = []
 
         if (not self.args.afm[0] == None):
             for index, data in enumerate(data_for_afm_dafm):
-                print ("testing", index)
+                print("testing", index)
                 if index == 0:
                     predictions.append(self.fit_predict_afm(data[0], data[1], data[2], data[3], data[4]))
                 else:
@@ -568,15 +600,19 @@ class KCModel:
 
         elif (not self.args.dafm[0] == None):
             for data in data_for_afm_dafm:
+                print("Start of the data_for_afm_dafm")
                 if self.args.dafm[1] == "Yes":
+                    print("Start of the predictions, dafm=Yes")
                     predictions.append(self.fit_predict_batch_dafm(data[0], data[1]))
+                    print("end of the predictions")
                 else:
+                    print("Start of prediction,dafm=No")
                     predictions.append(self.fit_predict_dafm(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8]))
-
         else:
+            print("self.args.afm[0] == None is true")
             for data in data_for_afm_dafm:
                 predictions.append(self.fit_predict_dkt(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]))
 
-        print (predictions)
+print("Start this model")
 obj = KCModel()
 obj.main()

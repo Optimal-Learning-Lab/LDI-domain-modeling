@@ -43,6 +43,7 @@ class Qmatrix:
         d['half'], d['same'], d['double'], d['samem10'], d['samep10'], d['integer'] = lambda k:int(k/2), lambda k:k, lambda k: 2*k, lambda k:int (k/2-k/10), lambda k: int(k/2+k/10), lambda k: k
         if ctype == "kmeans":
             try:
+                print("try matlab.engine")
                 import matlab.engine
                 print ("Clustering using matlab")
                 if distance == "euclidean":
@@ -50,26 +51,32 @@ class Qmatrix:
                 else:
                     distance = 'cosine'
                 data_path = self.path + 'log/'+str(uid)+'.mat'
+                print("data_path is {}".format(data_path))
+
                 eng = matlab.engine.start_matlab()
-                data = eng.load(data_path);
+                data = eng.load(data_path)
                 eng.double(data['x'])
                 z = eng.kmeans(eng.double(data['x']), d[csize.split('_')[0]](data['k']), 'distance', distance);
                 labels = np.array(z, dtype=np.int32)
                 labels = labels[:, 0]
+
+                print("labels is :{}".format(labels))
+
             except:
                 from sklearn.cluster import KMeans
                 print ("Clustering using sklearn and using euclidean with cluster size as: ", d[csize.split('_')[0]](self.k), csize, self.k)
                 kmeans = KMeans(n_clusters=d[csize.split("_")[0]](self.k))
-                kmeans.fit(list(self.data['vector']))
+                kmeans.fit(list(self.data['vector']))  # use the vector to do distance measurement
                 labels = kmeans.labels_
+                print("k means labels are {}".format(labels))
 
         problem_path = self.path +'log/'+uid+'.pro'
+
+        print("problem_path is {}".format(problem_path))
+
         problems = pd.read_csv(problem_path, sep=",", header=None)
         problems = list(problems[0].map(str))
         qmatrix = dict(zip(problems, list(map(str, list(labels)))))
-        # print("start of qmatrix")
-        # print(qmatrix)
-        # print("end of qmatrix")
         return qmatrix
 
     def total_skills(self, skill_train):
@@ -121,13 +128,24 @@ class Qmatrix:
             X["old_Opportunity"] = X["Opportunity"]
         l = []
         k = []
+
+        print("length of qmatrix.keys() is {}".format(len(qmatrix.keys())))
+        print("qmatrix.keys() is {}".format(qmatrix.keys()))
+        print("qmatrix values is {}".format(qmatrix))
+        print("X columns is {}".format(X.columns))
+        print("X['problem_id'] is {}".format(X['problem_id']))
+
         for i in qmatrix.keys():
             k.append(i)
+
         for i in list(X['problem_id']):
-            if i in k:
-                l.append(str(qmatrix[i]))
+            if str(i) in k:
+                #print(qmatrix[str(i)])
+                l.append(str(qmatrix[str(i)]))
             else:
                 l.append('')
+
         X["skill_name"] = l
+
         X = self.opportunity_count(X)
         return X

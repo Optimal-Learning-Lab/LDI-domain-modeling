@@ -1,6 +1,7 @@
 import pandas as pd
 import sys, os
 import random
+import numpy as np
 
 def preprocessing(dataset_path, columns_list):
 
@@ -17,8 +18,9 @@ def preprocessing(dataset_path, columns_list):
 
     ## any preprocessing can de done here
 
+    print("preprocessing is columns is {}".format(columns_list))
+
     data = data[columns_list]
-    #print(data)
     return data
 
 def split(X, split_type="user_id", train_set=0.8):
@@ -42,9 +44,9 @@ def split(X, split_type="user_id", train_set=0.8):
 def concat_unit_users(data, make_unit_users="No"):
 
         if make_unit_users == "all":
-
-            data["new_id"] = data["user_id"] + "@" + data["Unit"]
+            data["new_id"] = data["user_id"] + "@" + data["unit"]
             g = list(data.groupby("new_id"))
+
             responses = []
             users = []
             for i in range(len(g)):
@@ -60,13 +62,16 @@ def concat_unit_users(data, make_unit_users="No"):
             for i in range(len(g)):
                 users.append(g[i][0])
                 responses.append(len(g[i][1]))
+                # print("==========line 48")
+                # print(responses)
             df_user_response = pd.DataFrame({"responses":responses, "users":users})
 
         else:
-            u_data = data[data["Unit"].isin([make_unit_users])]
+            print(data.columns)
+            u_data = data[data["unit"].isin([make_unit_users])]
             users = list(set(u_data["user_id"]))
             data = data[data["user_id"].isin(users)]
-            data["new_id"] = data["user_id"] + "@" + data["Unit"]
+            data["new_id"] = data["user_id"] + "@" + data["unit"]
             g = list(data.groupby("new_id"))
             responses = []
             users = []
@@ -97,13 +102,9 @@ def f(args, make_unit_users="No"):
 
     columns_dict = {args.user_id[0]: 'user_id', args.problem_id[0]: 'problem_id', \
                     args.skill_name[0]: 'skill_name', args.correctness[0]: 'correct', \
-                    args.unit[1]: 'Unit', args.section[1]: 'section'}
-
-    # columns_dict = {args.user_id[0]: 'user_id', args.problem_id[0]: 'problem_id', \
-    #                 args.skill_name[0]: 'skill_name', args.correctness[0]: 'correct', \
-    #                 args.unit[1]: 'Unit', args.section[1]: 'section', args.base_sequence_id[0]: 'base_sequence_id'}
-
+                    args.unit[1]: 'unit', args.section[1]: 'section'}
     del columns_dict[None]
+    print("columns_dict is {}".format(columns_dict))
     data = preprocessing(args.dataset_path[0], list(columns_dict.keys()))
     data.rename(columns=columns_dict, inplace=True)
     train_test_user(data, args)

@@ -17,7 +17,7 @@ library(dplyr)
 library(paramtest)
 library(data.table)
 
-source("C://Users//ppavl//Dropbox//Active projects//LKT//R//LKTfunctions.R")
+source("C:\\Users\\Liang Zhang\\Desktop\\2022_Spring\\LDI\\LDI-domain-modeling\\LKTfunctions.R")
 
 #parameters
 posKC<-3
@@ -29,13 +29,14 @@ RSVDcomp<-2
 #rm(posKC,KCthreshm,RSVDcomp)
 
 
-
 #==========================Data Preparation==============================
 
 
-setwd("C:\\Users\\ppavl\\Dropbox\\Active Projects\\LDI-domain-modeling\\")
+#setwd("C:\\Users\\ppavl\\Dropbox\\Active Projects\\LDI-domain-modeling\\")
 
-val<-setDT(read.table("ds126_tx_All_Data_297_2015_0802_174904.txt",sep="\t",
+setwd("C:\\Users\\Liang Zhang\\Desktop\\2022_Spring\\LDI\\LDI-domain-modeling\\")
+
+val<-setDT(read.table("ds1465_tx_All_Data_64_2016_0720_222352short.txt",sep="\t",
                       header=TRUE,na.strings="NA",quote="",comment.char = ""))
 #val$KC..Default.<-val$KC..Article_Rule.
 

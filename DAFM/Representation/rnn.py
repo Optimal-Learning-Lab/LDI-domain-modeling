@@ -6,6 +6,7 @@ from keras.layers import LSTM
 from keras.layers.recurrent import SimpleRNN
 from keras.layers import merge
 from keras.layers.merge import multiply
+from keras.layers import merge
 from keras.callbacks import EarlyStopping
 from keras import backend as K
 from theano import tensor as T
@@ -18,7 +19,8 @@ import numpy as np
 import pdb
 from math import sqrt
 from keras.callbacks import Callback
-
+import torch
+import tensorflow as tf
 """
 To print the average rmse on the validation set after every epoch
 """
@@ -29,7 +31,7 @@ class TestCallback(Callback):
         self.x_test, self.y_test_order, self.y_test = test_data
 
     def on_epoch_end(self, epoch, logs={}):
-
+        print("line 32 in rnn")
         y_pred = self.model.predict([self.x_test, self.y_test_order])
         avg_rmse = self.rmse_masking(self.y_test, y_pred)
         print('\nTesting avg_rmse: {}\n'.format(avg_rmse))
@@ -108,33 +110,51 @@ class DKTnet():
         model = Model(inputs=[x, y_order], outputs=reduced)
         model.compile( optimizer = 'adagrad',
                         loss = self.custom_bce)
-        # model.fit([self.x_train, self.y_train_order], self.y_train, batch_size = self.batch_size, epochs=self.epoch, callbacks = [earlyStopping], validation_data=([self.x_test, self.y_test_order], self.y_test), shuffle = True)
+
+        print("start of rnn model.fit")
+        #model.fit([self.x_train, self.y_train_order], self.y_train, batch_size = self.batch_size, epochs=self.epoch, callbacks = [earlyStopping], validation_data=([self.x_test, self.y_test_order], self.y_test), shuffle = True)
+
+        #print(str(self.batch_size))
+        #print([self.x_train, self.y_train_order])
+
         model.fit([self.x_train, self.y_train_order], self.y_train, batch_size = self.batch_size, epochs=self.epoch, callbacks = [earlyStopping], verbose=0, validation_split=0.2, shuffle = True)
+
+        print("end of rnn model.fit")
         return model
 
     def custom_bce(self, y_true, y_pred):
 
-        print(y_true)
-        print(y_pred)
         b = K.not_equal(y_true, -K.ones_like(y_true))
         b = K.cast(b, dtype='float32')
+        print("Compute the ans")
+        print(y_pred)
+
         ans = K.mean(K.binary_crossentropy(y_pred, y_true), axis=-1) * K.mean(b, axis=-1)
-        # count =  K.not_equal(ans, 0).sum()
-        # print("custoem_bce")
-        # return  ans.sum()/count
-
-        booltensor=K.not_equal(ans, 0)
-
+        booltensor = K.not_equal(ans, 0)
         import tensorflow as tf
         count = tf.reduce_sum(tf.cast(K.not_equal(ans, 0), tf.float32))
         print("custom_bce")
-        return tf.reduce_sum(ans)/count
+        return tf.reduce_sum(ans) / count
+
+        # count =K.not_equal(ans, 0)
+        #
+        # count = K.not_equal(ans, 0).sum()
+        # return  ans.sum()/count
+        #I modify the code to use the torch.sum() instead of sum()
+        #check the values of tensor
+        #sess = tf.compat.v1.InteractiveSession()
+        #print(ans.eval())
+        #sess.close()
+
+        #print(ans)
+
+        #return np.sum(ans)/torch.sum(count)
 
     def predict_rmse(self, x_test, y_true, y_test_order, model, batch_size=32):
 
         y_pred = model.predict([x_test, y_test_order], batch_size=batch_size)
         rmse = self.rmse_masking(y_true, y_pred, y_test_order, x_test)
-        # print ("RMSE", rmse)
+        print ("RMSE: ", rmse)
         return rmse
 
     def rmse_masking(self, y_true, y_pred, y_test_order, x_test):
