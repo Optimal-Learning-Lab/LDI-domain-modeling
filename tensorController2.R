@@ -5,7 +5,6 @@ library(gplots)
 library(LKT)
 library(rsvd)
 library(e1071)
-##library(Rgraphviz)
 library(Matrix)
 library(SparseM)
 library(LiblineaR)
@@ -21,8 +20,8 @@ setwd("C:/Users/ppavl/OneDrive - The University of Memphis/IES Data")
 #==========================Data Preparation==============================
 val<-setDT(read.table("ds1465_tx_All_Data_64_2016_0720_222352.txt",sep="\t", header=TRUE,na.strings="NA",quote="",comment.char = ""))
 #setwd("C:\\Users\\Liang Zhang\\Desktop\\2021_Fall\\LDIProject\\LDI-domain-modeling\\FDTF_R")
-#setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
-setwd("C:\\Users\\Liang Zhang\\Desktop\\2022_Spring\\LDI\\LDI-domain-modeling\\FDTF_R")
+setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
+#setwd("C:\\Users\\Liang Zhang\\Desktop\\2022_Spring\\LDI\\LDI-domain-modeling\\FDTF_R")
 
 val$CF..ansbin.<-ifelse(tolower(val$Outcome)=="correct",1,ifelse(tolower(val$Outcome)=="incorrect",0,-1))
 val$CF..ansbin.<-as.numeric(val$CF..ansbin.)
@@ -109,13 +108,13 @@ model_str = 'fdtf'
 #tfData_training_array<-np_array(array(tfData_training),dtype = NULL, order = "C")
 #setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
 if (course_str=="Quiz"){
-  concept_dim = 15
-  lambda_t = 0
-  lambda_q = 0.01
-  lambda_bias = 0
+  concept_dim = 10
+  lambda_t = 0.1   # lambda_t and lambda_q are hyper-parameters to control the weights of regularization term of T and Q.
+  lambda_q = 0.1
+  lambda_bias = 0.0001
   slr = 0.5
   lr = 0.1
-  max_iter = 30
+  max_iter = 50
 
   validation = FALSE
   metrics = c("rmse", "mae", "auc")
@@ -215,14 +214,7 @@ if (course_str=="Quiz"){
       print("done creation of model")
     }
 
-    print(validation)
-
-    if(validation){
-      test_data<-config$val
-    }else{
-      test_data<-rbind(config$test,config$val)
-      model$train_data<-rbind(model$train_data,config$val,config$test)
-    }
+    test_data<-config$test
 
     test_start_attempt<-NULL
     # since the test start attempt for different students are different,
@@ -240,27 +232,32 @@ if (course_str=="Quiz"){
 
     source_python("RestartTraining.py")
 
-    for (test_attempt in test_start_attempt:model$num_attempts){
-      model$current_test_attempt<-test_attempt
+    perf_dict<-dict()
+    #for (test_attempt in test_start_attempt:(model$num_attempts-1)){
+
+      #model$current_test_attempt<-test_attempt
       model$lr<-lr
-      restart_training(model)
-      print("Start Training")
+      #restart_training(model)
+      #print(paste("Start the ",test_attempt,"th Training"))
       train_perf = model$training()
+      #print(paste("End the ",test_attempt,"th Training"))
 
       test_set<-data.frame();
-      test_set<-test_data[test_data[,2]==test_start_attempt,]
-      model$train_data<-rbind(model$train_data,test_set)
-    }
 
-    #Output the best Q matrix
+      #test_set<-test_data[test_data[,2]==model$current_test_attempt,]
+      test_set=config$test
+
+      #model$train_data<-rbind(model$train_data,test_set)
+      test_set <- data.frame(apply(test_set, 2, function(x) as.numeric(as.character(x))))
+
+      test_perf <-model$testing(test_set)
+
+      print(test_perf)
+    #}
+
     Q<-model$Q
     T<-model$T
-
-    test_set <- data.frame(apply(test_set, 2, function(x) as.numeric(as.character(x))))
-
-    test_perf <-model$testing(test_set)
-
-    perf_dict<-dict()
+    Y<-model$Y #Y is the estimated tensor, numStudent*numAttempt*numQuestion
 
     overall_perf<-model$eval(model$test_obs_list,model$test_pred_list)
     if(validation){
@@ -268,36 +265,21 @@ if (course_str=="Quiz"){
     }else{
       perf_dict$test<-overall_perf
     }
-
-    print(perf_dict)
-
   }
 
 }
 
 #library(tensorr)
 library(rTensor)
+Q_matrix=as.matrix(Q)  # but the element values are not the score
 
-T<-as.tensor(model$T)
-Q<-t(as.matrix(model$Q))
-dim(T)
-dim(Q)
 
-#Get the optimized tensor, students*attempts*questions
-Opt_Tensor<-ttm(T,Q,3)
+#Q matrix is Q <-Q<-t(as.matrix(model$Q)), Number of Questions * Number of Concepts
 
-Num_Students<-Opt_Tensor@modes[1]
-Num_Attempts<-Opt_Tensor@modes[2]
-Num_Questions<-Opt_Tensor@modes[3]
-dim(Opt_Tensor)
-
-#Specify the q-matrix by tensor slice
-Opt_Tensor[,8,]
-
-#Q is q-matrix of the concepts versus questions, you may use other 1-matrix
-df<-t(Q)
+df<-Q_matrix
 
 colnames(df)<-QuestionLevs
+
 
 #parameters
 posKC<-3

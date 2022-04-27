@@ -13,7 +13,7 @@ library(dplyr)
 library(paramtest)
 library(data.table)
 library(RColorBrewer)
-source("C://Users//ppavl//Dropbox//Active projects//LKT//R//LKTfunctions.R")
+#source("C://Users//ppavl//Dropbox//Active projects//LKT//R//LKTfunctions.R")
 
 #==========================Data Preparation==============================
 
@@ -66,7 +66,7 @@ diag(df)<-0
 
 x<<-data.frame()
 
-temp<-grid_search(testKCmodel,params=list(KCthreshm=c(.1),RSVDcomp=c(10),posKC=c(10)),val=(val))
+temp<-grid_search(testKCmodel,params=list(KCthreshm=c(.1),RSVDcomp=c(2:10),posKC=c(2:10)),val=(val))
 names(x)<-c("KCs","Components","R-squared","R-squared Gain")
 
 mean(y1[grepl("logsucAC",rownames(y1)),])-
@@ -144,7 +144,7 @@ diag(df)<-0
 
 x<<-data.frame()
 
-temp<-grid_search(testKCmodel,params=list(KCthreshm=c(.1),RSVDcomp=c(3),posKC=c(6)),val=(val))
+temp<-grid_search(testKCmodel,params=list(KCthreshm=c(.1),RSVDcomp=c(2:10),posKC=c(2:10)),val=(val))
 names(x)<-c("KCs","Components","R-squared","R-squared Gain")
 
 y1[grepl("logsucAC",rownames(y1)),]
@@ -212,7 +212,7 @@ colnames(df)<-rownames(mydata)
 
 x<<-data.frame()
 
-temp<-grid_search(testKCmodel,params=list(KCthreshm=c(.1),RSVDcomp=c(3),posKC=c(6)),val=(val))
+temp<-grid_search(testKCmodel,params=list(KCthreshm=c(.1),RSVDcomp=c(2:10),posKC=c(2:10)),val=(val))
 names(x)<-c("KCs","Components","R-squared","R-squared Gain")
 
 y1[grepl("logsucAC",rownames(y1)),]
@@ -275,7 +275,7 @@ colnames(df)<-rownames(mydata)
 
 x<<-data.frame()
 
-temp<-grid_search(testKCmodel,params=list(KCthreshm=c(.1),RSVDcomp=c(10),posKC=c(10)),val=(val))
+temp<-grid_search(testKCmodel,params=list(KCthreshm=c(.1),RSVDcomp=c(2:10),posKC=c(2:10)),val=(val))
 names(x)<-c("KCs","Components","R-squared","R-squared Gain")
 
 
