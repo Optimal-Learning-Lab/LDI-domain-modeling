@@ -205,7 +205,7 @@ class KCModel:
         # else:
         #     print ("Not Saving")
 
-    def fit_predict_afm(self, trainX, trainY, testX, testY, d_t):
+    def fit_predictF_afm(self, trainX, trainY, testX, testY, d_t):
 
         afm_obj =  AFMK() if self.args.afm[0]=="afm-keras" else AFML()
         afm_model, AIC, BIC = afm_obj.fit(trainX, trainY)
@@ -269,6 +269,7 @@ class KCModel:
                     print("line 264")
                     dafm_model, AIC, BIC, best_epoch, loss_epoch = dafm_obj.fit(trainX, trainY, trainS, trainStudent, testX, testY, testS, testStudent, dafm_model, loaded=True, validation=self.validation)
             else:
+
                 dafm_model, AIC, BIC, best_epoch, loss_epoch = dafm_obj.fit(trainX, trainY, trainS, trainStudent, testX, testY, testS, testStudent, dafm_model, validation=self.validation)
                 if self.args.save_model[0] == "True":
                     self.save_model(dafm_model, initialize["dafm_type"])

@@ -268,6 +268,9 @@ if (course_str=="Quiz"){
 library(rTensor)
 Q_matrix=as.matrix(Q)  # but the element values are not the score
 
+#Normalize
+Q_matrix=scale(Q_matrix)
+
 #Get the optimized tensor, students*attempts*questions
 #Opt_Tensor<-ttm(T,Q,3)
 

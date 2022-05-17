@@ -143,6 +143,11 @@ class DeepAFM:
             bias_layer = TimeDistributed(Dense(1, activation='linear', use_bias=False, kernel_initializer=initializers.Zeros(), trainable=True), name="bias")(virtual_input1)
 
         step_input = Input(batch_shape=(None, None, steps), name='step_input')
+
+        print("binary is :{}".format(binary))
+        print("randomize is :{}".format(randomize))
+        print("q_jk_size is: {}".format(q_jk_size))
+
         if randomize:
              if binary=="False":
                 Q_jk = TimeDistributed(Dense(q_jk_size, use_bias=False, activation=activation, kernel_initializer=self.custom_random), trainable=qtrainable ,name="Q_jk")(step_input)
@@ -169,7 +174,11 @@ class DeepAFM:
         else:
             pass
 
+        print("Q_jk in fit is {}".format(Q_jk))
+        print(Q_jk[:,:,1])
+
         Qjk_mul_Bk = multiply([Q_jk, B_k])
+
         sum_Qjk_Bk = TimeDistributed(Dense(1, activation='linear', trainable=False, kernel_initializer=initializers.Ones(), use_bias=False), trainable=False,name="sum_Qjk_Bk")(Qjk_mul_Bk)
 
         P_k = SimpleRNN(skills, kernel_initializer=initializers.Identity(), recurrent_initializer=initializers.Identity() , use_bias=False, trainable=False, activation='linear', return_sequences=True, name="P_k")(Q_jk)
@@ -177,6 +186,8 @@ class DeepAFM:
         Qjk_mul_Pk_mul_Tk = multiply([Q_jk, P_k, T_k])
         sum_Qjk_Pk_Tk = TimeDistributed(Dense(1, activation='linear', trainable=False, kernel_initializer=initializers.Ones(), use_bias=False),trainable=False, name="sum_Qjk_Pk_Tk")(Qjk_mul_Pk_mul_Tk)
         Concatenate = concatenate([bias_layer, sum_Qjk_Bk, sum_Qjk_Pk_Tk])
+
+        print("Concatenate is: {}".format(Concatenate))
 
         if not (theta_student=="False"):
             if finetuning:
@@ -203,6 +214,9 @@ class DeepAFM:
             model = Model(inputs=[virtual_input1, step_input], outputs=output)
 
         d_optimizer = {"rmsprop":optimizers.RMSprop(lr=learning_rate), "adam":optimizers.Adam(lr=learning_rate), "adagrad":optimizers.Adagrad(lr=learning_rate) }
+
+        print("d_optimizer is {}".format(d_optimizer))
+
         model.compile( optimizer = d_optimizer[optimizer],
                        loss = self.custom_bce)
         return model
@@ -300,9 +314,18 @@ class DeepAFM:
         BIC = model_param * np.log(N) - 2 * L
         B_k = best_model.get_layer("B_k").get_weights()[0]
         T_k = best_model.get_layer("T_k").get_weights()[0]
+        Q_jk= best_model.get_layer("Q_jk").get_weights()[0]
 
         print("B_k is {}".format(B_k))
         print("T_k is {}".format(T_k))
+        print("Q_jk is {}".format(Q_jk))
+
+        import os
+        import csv
+        print("The os path is")
+        print(os.getcwd())
+        parameter_writer = csv.writer(open(os.getcwd()+ '/'+'Optimized_Q_Matrix'+'.csv', 'w'))
+        parameter_writer.writerow(Q_jk)
 
         return best_model, AIC, BIC, epoch, loss_epoch
 
@@ -368,7 +391,7 @@ class DeepAFM:
                 current_avg_rmse = np.mean(self.bce_loss_batches(dafmdata_obj, model, utype="test"))
                 loss_epoch["val_loss"].append(current_avg_rmse)
 
-            print("total_train_samples: "+total_train_samples)
+            print("total_train_samples: {}".format(total_train_samples))
             print(float(total_train_samples))
             loss_epoch["loss"].append(float(total_loss)/float(total_train_samples))
             loss_epoch["epoch"].append(counter)
@@ -394,6 +417,9 @@ class DeepAFM:
 
         mask_matrix = np.sum(x_train, axis=2).flatten()
         num_users, max_responses = np.shape(x_train)[0], np.shape(x_train)[1]
+
+        print('y_pred is {}'.format(y_pred))
+
         y_pred = y_pred.flatten()
         y_true = y_true.flatten()
         rmse = []

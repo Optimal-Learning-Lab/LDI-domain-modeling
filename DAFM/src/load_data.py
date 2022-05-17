@@ -66,6 +66,7 @@ class afm_data_generator():
             qmatrix_obj = Qmatrix(data=data_for_qmatrix, path=self.args.source_path, ctype="kmeans", csize=self.args.clustering_params[0], distance=self.args.clustering_params[1], uid='3')
             qmatrix_obj.problemvector()
             qmatrix = qmatrix_obj.q_matrix()
+
             print("======use k-means to measure qmatrix, the output is question and labeled clustering=====")
             print(qmatrix)
             print("=======use k-means to measure qmatrix, the output is question and labeled clustering======")

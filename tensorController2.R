@@ -12,15 +12,16 @@ library(dplyr)
 library(paramtest)
 library(data.table)
 library(RColorBrewer)
+library(caret)
 
 #setwd("C:/Users/ppavl/OneDrive - The University of Memphis/IES Data")
 setwd("C:\\Users\\Liang Zhang\\Desktop\\2022_Spring\\LDI\\LDI-domain-modeling\\FDTF_R")
 
-setwd("C:/Users/ppavl/OneDrive - The University of Memphis/IES Data")
+#setwd("C:/Users/ppavl/OneDrive - The University of Memphis/IES Data")
 #==========================Data Preparation==============================
 val<-setDT(read.table("ds1465_tx_All_Data_64_2016_0720_222352.txt",sep="\t", header=TRUE,na.strings="NA",quote="",comment.char = ""))
 #setwd("C:\\Users\\Liang Zhang\\Desktop\\2021_Fall\\LDIProject\\LDI-domain-modeling\\FDTF_R")
-setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
+#setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
 #setwd("C:\\Users\\Liang Zhang\\Desktop\\2022_Spring\\LDI\\LDI-domain-modeling\\FDTF_R")
 
 val$CF..ansbin.<-ifelse(tolower(val$Outcome)=="correct",1,ifelse(tolower(val$Outcome)=="incorrect",0,-1))
@@ -108,7 +109,7 @@ model_str = 'fdtf'
 #tfData_training_array<-np_array(array(tfData_training),dtype = NULL, order = "C")
 #setwd("C:/Users/ppavl/Dropbox/Active projects/LDI-domain-modeling/FDTF_R")
 if (course_str=="Quiz"){
-  concept_dim = 10
+  concept_dim = 5
   lambda_t = 0.1   # lambda_t and lambda_q are hyper-parameters to control the weights of regularization term of T and Q.
   lambda_q = 0.1
   lambda_bias = 0.0001
@@ -273,13 +274,17 @@ if (course_str=="Quiz"){
 library(rTensor)
 Q_matrix=as.matrix(Q)  # but the element values are not the score
 
-
 #Q matrix is Q <-Q<-t(as.matrix(model$Q)), Number of Questions * Number of Concepts
 
+#Normalize this matrix
+#c1 <- colSums(Q_matrix)
+#Q_matrix_nor<-scale(Q_matrix, center = TRUE, scale = c1)
+#Q_matrix_nor<-t(scale(t(Q_matrix), center = TRUE, scale = TRUE))
+#Q_matrix_nor<-scale(Q_matrix, center = TRUE, scale = TRUE)
+
+
 df<-Q_matrix
-
 colnames(df)<-QuestionLevs
-
 
 #parameters
 posKC<-3
@@ -289,7 +294,7 @@ usethreshm<-TRUE
 KCthreshm<-.2
 RSVDcomp<-2
 
-#source("LKTfunctions.R")
+source("LKTfunctions.R")
 source("bar.R")
 
 x<<-data.frame()
@@ -304,7 +309,6 @@ y2[grepl("logsucAC",rownames(y1)),]
 y2[grepl("logfailAC",rownames(y1)),]
 
 x$KCs <- sprintf('%i KCs', x$KCs)
-
 
 myx<-dcast(x, KCs ~ Components, value.var="R-squared Gain") #reshape to wide data format
 myx[10,]<-myx[1,]
