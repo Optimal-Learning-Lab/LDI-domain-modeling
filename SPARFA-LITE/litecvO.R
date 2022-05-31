@@ -31,6 +31,8 @@ cvlite <- function(Y){
 			Ytemp <- Y
 			Ylo <- Y
 			Ytemp[mask_temp] <- NaN
+			#print("Ytemp")
+
 			Ylo[!mask_temp] <- NaN
 			Ylo_v <- Ylo[!is.nan(Ylo)]
 

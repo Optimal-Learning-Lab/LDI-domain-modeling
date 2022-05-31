@@ -178,4 +178,5 @@ class DKT:
         print("length of the vector is {}".format(len(vector)))
         print("skill_vec is {}".format(skill_vec))
         print ('Representation Done for dkt')
+        print(X)
         return X

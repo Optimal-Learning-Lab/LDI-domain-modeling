@@ -1,11 +1,16 @@
 # this code is for the Sparfalite Analysis, which includes two functions: litecv.R and sparfalite.R
 
+
+setwd("C:\\Users\\Liang Zhang\\Desktop\\2022_Spring\\LDI\\LDI-domain-modeling\\SPARFA-LITE")
+
 source("litecv.R")
 
-setwd("C:\\Users\\Liang Zhang\\Desktop\\Dissertation\\GA\\R_code\\Sparfa-Lite")
+setwd("C:\\Users\\Liang Zhang\\Desktop\\2022_Spring\\LDI\\LDI-domain-modeling\\SPARFA-LITE\\testdata")
+
+#setwd("C:\\Users\\Liang Zhang\\Desktop\\2022_Spring\\LDI\\LDI-domain-modeling\\ClozeResultsSparfa\\testdata")
 val<-read.table("ds1465_tx_All_Data_64_2016_0720_222352short.txt",sep="\t", header=TRUE,na.strings="NA",quote="",comment.char = "")
 #val<-read.table("ds1462_tx_All_Data_61_2016_0121_231536.txt",sep="\t", header=TRUE,na.strings="NA",quote="",comment.char = "")
-val$CF..ansbin.<-ifelse(tolower(val$Outcome)=="correct",1,ifelse(tolower(val$Outcome)=="incorrect",0,NaN)) 
+val$CF..ansbin.<-ifelse(tolower(val$Outcome)=="correct",1,ifelse(tolower(val$Outcome)=="incorrect",0,NaN))
 val$CF..ansbin.<-as.numeric(val$CF..ansbin.)
 val<-val[!is.nan(val$CF..ansbin.),]    #remove rows containing NaN in val$CF..ansbin.
 
@@ -71,6 +76,7 @@ colnames(corSearch)[which(names(corSearch) == "col")]="Question No. 2nd"
 
 write.table(corSearch,file="corSearch.txt",sep="\t",row.names=F, col.names=T,eol = "\n", quote=F)
 library(flextable)
+library(webshot)
 ft <- flextable(corSearch)
 ft <- align(ft, align = "left", part = "all")
 ft <- autofit(ft)

@@ -188,6 +188,16 @@ class afm_data_generator():
         print(X_matrix.head())
         print(X_matrix.columns)
         print("X_matrix['skill_name'] is {}".format((X_matrix['skill_name'])))
+
+        import os
+        import csv
+        print("The x matrix os path is")
+        print(os.getcwd())
+        #parameter_writer = csv.writer(open(os.getcwd() + '/' + 'Resprentation_Cluster_Q_Matrix' + '.csv', 'w'))
+        # parameter_writer.writerow(X_matrix.columns)
+        df = pd.DataFrame(X_matrix)
+        df.to_csv('Resprentation_Cluster_Q_Matrix.csv')
+
         print("=========X_matrix clustering=========")
         if not (self.args.dkt[0]==None):
             print ('DKT loading data ....')

@@ -175,7 +175,7 @@ class DeepAFM:
             pass
 
         print("Q_jk in fit is {}".format(Q_jk))
-        print(Q_jk[:,:,1])
+        print(Q_jk[:,:,:])
 
         Qjk_mul_Bk = multiply([Q_jk, B_k])
 
@@ -320,12 +320,12 @@ class DeepAFM:
         print("T_k is {}".format(T_k))
         print("Q_jk is {}".format(Q_jk))
 
-        import os
-        import csv
-        print("The os path is")
-        print(os.getcwd())
-        parameter_writer = csv.writer(open(os.getcwd()+ '/'+'Optimized_Q_Matrix'+'.csv', 'w'))
-        parameter_writer.writerow(Q_jk)
+        # import os
+        # import csv
+        # print("The os path is")
+        # print(os.getcwd())
+        # parameter_writer = csv.writer(open(os.getcwd()+ '/'+'Optimized_Q_Matrix'+'.csv', 'w'))
+        # parameter_writer.writerow(Q_jk)
 
         return best_model, AIC, BIC, epoch, loss_epoch
 

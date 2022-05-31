@@ -10,6 +10,8 @@ source("sparfaliteO.R")
 
 cvlite <- function(Y){
 
+  print("litecvo---cvlite")
+
 	cvfold <- 4
 	cvt <- 1
 	siz <- dim(Y)
@@ -20,6 +22,8 @@ cvlite <- function(Y){
 	correc <- matrix(0,1,length(lamcv))
 
 	for (cv in seq(1,cvt)){
+
+	  print(cv)
 
 		set.seed(cv)
 		foldi <- matrix(sample(1:cvfold,siz[1]*siz[2],replace=T),siz[1],siz[2])
